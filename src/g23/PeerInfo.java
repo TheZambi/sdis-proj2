@@ -1,12 +1,13 @@
 package g23;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 
-public class PeerInfo {
+public class PeerInfo implements Serializable {
     private InetSocketAddress address;
-    private Integer id;
+    private long id;
 
-    public PeerInfo(InetSocketAddress address, Integer id) {
+    public PeerInfo(InetSocketAddress address, long id) {
         this.address = address;
         this.id = id;
     }
@@ -15,7 +16,7 @@ public class PeerInfo {
         return this.address;
     }
 
-    public Integer getId(){
+    public long getId(){
         return this.id;
     }
 }

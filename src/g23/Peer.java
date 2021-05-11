@@ -1,19 +1,16 @@
 package g23;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.AlreadyBoundException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class Peer {
 
-    private static final int m = 32;
+    private static final int m = 256;
 
     private PeerInfo info;
 
@@ -30,14 +27,18 @@ public class Peer {
     public Peer(InetSocketAddress address) throws IOException {
 
         this.info = new PeerInfo(address, Peer.calculateID(address));
+
         this.fingerTable = new ArrayList<>();
+        for (int i = 0; i < m; i++)
+            fingerTable.add(this.info);
+
         this.serverSocket = new ServerSocket(address.getPort());
 
         this.predecessor = null;
         this.successor = new PeerInfo(address, Peer.calculateID(address));
     }
 
-    private static int calculateID(InetSocketAddress address) {
+    private static long calculateID(InetSocketAddress address) {
 
         MessageDigest digest = null;
         try {
@@ -47,37 +48,70 @@ public class Peer {
         }
 
         byte[] hash = digest.digest(address.toString().getBytes());
-        return 0; //TODO
+        UUID id = UUID.nameUUIDFromBytes(hash);
+        long idInt = id.getLeastSignificantBits();
+        idInt = Math.round(idInt % Math.pow(2, Peer.m));
+        return idInt;
     }
 
-    private PeerInfo findSuccessor(Integer id) {
+    private PeerInfo findSuccessor(long id) {
         if (id > this.getId() && id < fingerTable.get(0).getId())
             return fingerTable.get(0);
         else {
-            for (int i = fingerTable.size(); i >= 0; i--) {
-                if (fingerTable.get(0).getId() < id && fingerTable.get(0).getId() > this.getId()) {
-                    return fingerTable.get(0);
-                }
+            PeerInfo closestPeer = this.closestPrecedingPeer(id);
+            Socket socket = null;
+            try {
+                socket = new Socket(closestPeer.getAddress().getAddress(), closestPeer.getAddress().getPort());
+                BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+                BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
+                out.write(("GETSUCCESSOR " + getId()).getBytes());
+
+                ObjectInputStream infoInObject = new ObjectInputStream(in);
+                PeerInfo successorInfo = (PeerInfo) infoInObject.readObject();
+
+                socket.close();
+
+                return successorInfo;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    private PeerInfo closestPrecedingPeer(long id) {
+        for (int i = fingerTable.size() - 1; i >= 0; i--) {
+            if (fingerTable.get(i).getId() < id && fingerTable.get(i).getId() > this.getId()) {
+                return fingerTable.get(i);
             }
         }
         return this.info;
     }
 
 
-    private void join(PeerInfo address) {
+    public void join(PeerInfo peer) {
+        predecessor = null;
+        Socket socket;
+        try {
+            System.out.println("AAAAAAAAAAAAAAAAAAAAAAA");
+            socket = new Socket(peer.getAddress().getAddress(), peer.getAddress().getPort());
+            BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
+            out.write(("GETSUCCESSOR " + getId()).getBytes());
+            System.out.println("CCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+            ObjectInputStream infoInObject = new ObjectInputStream(in);
+            successor = (PeerInfo) infoInObject.readObject();
+
+            socket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
         //find successor of node address //Maybe send message
     }
 
-//    private void stabilize() {
-////        Map.Entry<Integer, InetSocketAddress> x = successor.getPredecessor();// -->> Needs to send message
-//        if(this.getId() < x.getKey() && x.getKey() < successor.getId()){
-//            successor = x;
-//        }
-//
-////        this.notify(successor);
-//    }
 
-    //getNotified
     private void getNotified(PeerInfo node) {
         if (predecessor == null || (predecessor.getId() < node.getId() && node.getId() < this.getId())) {
             predecessor = node;
@@ -93,7 +127,7 @@ public class Peer {
     }
 
 
-    public Integer getId() {
+    public long getId() {
         return info.getId();
     }
 
@@ -109,47 +143,42 @@ public class Peer {
             byte[] readData = new byte[64000];
             int nRead = in.read(readData, 0, 64000);
 
+            System.out.println(readData);
+
             String[] data = (new String(readData)).split(" ");
 
             switch (data[0]) {
-                case "NOTIFY":
-                    getNotified(new PeerInfo((InetSocketAddress) socket.getRemoteSocketAddress(), Peer.calculateID((InetSocketAddress) socket.getRemoteSocketAddress())));
-                    break;
-                case "GETSUCCESSOR":
-                    Socket outSocket = new Socket(socket.getRemoteSocketAddress(), data[1]);
-                    BufferedOutputStream out=new BufferedOutputStream(outSocket.getOutputStream());
-                    out.write("SUCCESSOR"); // Needs to send peerinfo
-                    break;
+                case "NOTIFY" -> getNotified(new PeerInfo((InetSocketAddress) socket.getRemoteSocketAddress(), Peer.calculateID((InetSocketAddress) socket.getRemoteSocketAddress())));
+                case "GETSUCCESSOR" -> {
+                    BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+                    ObjectOutputStream outObject = new ObjectOutputStream(out);
+                    outObject.writeObject(this.findSuccessor(Long.parseLong(data[1]))); // Needs to send peerinfo
+                    socket.close();
+                }
             }
         }
     }
 
 
-    public static void main(String[] args) throws IOException, AlreadyBoundException {
+    public static void main(String[] args) throws IOException {
 //        if (args.length != 9) {
 //            System.out.println("Usage: java Peer <protocol_version> <peer_id> <service_access_point> <MC_address> <MC_Port> <MDB_address> <MDB_Port> <MDR_address> <MDR_Port>");
 //            return;
 //        }
-//
-//        String protocolVersion = args[0];
-//        if(!protocolVersion.equals("1.0") && !protocolVersion.equals("1.1") && !protocolVersion.equals("1.2") && !protocolVersion.equals("1.3") && !protocolVersion.equals("1.4")) {
-//            System.out.println("Protocol versions available: 1.0, 1.1, 1.2, 1.3, 1.4");
-//            return;
-//        }
 
-        int peerId = Integer.parseInt(args[1]);
-        String serviceAccessPointName = args[2];
-//
-//        Channel MCchannel = new Channel(args[3], Integer.parseInt(args[4]));
-//
-//        Channel MDBchannel = new Channel(args[5], Integer.parseInt(args[6]));
-//
-//        Channel MDRchannel = new Channel(args[7], Integer.parseInt(args[8]));
-//
-//        g03.Peer peer = new g03.Peer(peerId, protocolVersion, serviceAccessPointName, MCchannel, MDBchannel, MDRchannel);
-//
-//        peer.synchronizer.scheduleAtFixedRate(new Synchronizer(peer), 0, 1, TimeUnit.SECONDS);
+        String address = args[0].split(":")[0];
+        int port = Integer.parseInt(args[0].split(":")[1]);
 
+        Peer peer = new Peer(new InetSocketAddress(address, port));
+        if (args.length == 2) {
+            String toJoinAddress = args[1].split(":")[0];
+            int toJoinPort = Integer.parseInt(args[1].split(":")[1]);
+
+            InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
+            peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
+        }
+
+        peer.communicate();
     }
 
 }
