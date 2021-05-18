@@ -1,14 +1,19 @@
 package g23;
 
+import g03.PeerStub;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-public class Peer {
+public class Peer implements ChordNode {
 
     private static final int m = 256;
 
@@ -18,7 +23,7 @@ public class Peer {
     private HashMap<String, String> data; //TODO
 
     private PeerInfo predecessor;
-    private PeerInfo successor;
+//    private PeerInfo successor;
 
     private int next; //Used for fix_fingers method
 
@@ -35,7 +40,9 @@ public class Peer {
         this.serverSocket = new ServerSocket(address.getPort());
 
         this.predecessor = null;
-        this.successor = new PeerInfo(address, Peer.calculateID(address));
+        this.fingerTable.set(0, new PeerInfo(address, Peer.calculateID(address)));
+
+
     }
 
     private static long calculateID(InetSocketAddress address) {
@@ -54,7 +61,7 @@ public class Peer {
         return idInt;
     }
 
-    private PeerInfo findSuccessor(long id) {
+    public PeerInfo findSuccessor(long id) throws RemoteException {
 
         if (id > this.getId() && id <= fingerTable.get(0).getId()){
             return fingerTable.get(0);
@@ -66,15 +73,12 @@ public class Peer {
             if(closestPeer.getId() == this.info.getId()) {
                 return this.info;
             }
-            try(Socket socket = new Socket(closestPeer.getAddress().getAddress(), closestPeer.getAddress().getPort());
-                BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
-                BufferedInputStream in = new BufferedInputStream(socket.getInputStream())
-            ) {
-                out.write(("GETSUCCESSOR " + getId()).getBytes());
-                out.flush();
-                ObjectInputStream infoInObject = new ObjectInputStream(in);
-                PeerInfo successorInfo = (PeerInfo) infoInObject.readObject();
-                return successorInfo;
+
+            try {
+                Registry registry = LocateRegistry.getRegistry();
+                ChordNode stub = (ChordNode) registry.lookup(String.valueOf(closestPeer.getId()));
+
+                return stub.findSuccessor(id);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -105,18 +109,21 @@ public class Peer {
             out.flush();
             ObjectInputStream infoInObject = new ObjectInputStream(in);
 
-            successor = (PeerInfo) infoInObject.readObject();
+            fingerTable.set(0, (PeerInfo) infoInObject.readObject());
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        System.out.println("JOINED - SUCCESSOR: " + this.successor.getId());
+        System.out.println("JOINED - SUCCESSOR: " + this.fingerTable.get(0).getId());
         //find successor of node address //Maybe send message
     }
 
 
-    private void getNotified(PeerInfo node) {
+    private void notify(PeerInfo node) {
+
+
+
         if (predecessor == null || (predecessor.getId() < node.getId() && node.getId() < this.getId())) {
             predecessor = node;
         }
@@ -127,7 +134,12 @@ public class Peer {
         if (next > m) {
             next = 1;
         }
-        fingerTable.set(next - 1, findSuccessor(this.getId() + (int) Math.pow(2, next - 1)));
+        try {
+            fingerTable.set(next - 1, findSuccessor(this.getId() + (int) Math.pow(2, next - 1)));
+        }catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
     }
 
 
