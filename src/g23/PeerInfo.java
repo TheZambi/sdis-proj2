@@ -19,4 +19,12 @@ public class PeerInfo implements Serializable {
     public long getId(){
         return this.id;
     }
+
+    @Override
+    public String toString() {
+        return "PeerInfo{" +
+                "address=" + address.getAddress() + ":" + address.getPort() +
+                ", id=" + id +
+                '}';
+    }
 }
