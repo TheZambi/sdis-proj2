@@ -48,8 +48,12 @@ public class Peer implements ChordNode {
         this.next = 0;
 
         this.fingerTable = new ArrayList<>();
+
+
         for (int i = 0; i < m; i++)
-            fingerTable.add(this.info);
+            fingerTable.add(null);
+
+        fingerTable.set(0, this.info);
 
         this.serverSocket = new ServerSocket(address.getPort());
 
@@ -114,7 +118,7 @@ public class Peer implements ChordNode {
 
     public PeerInfo findSuccessor(long id) throws RemoteException {
 
-        if (id > this.getId() && id <= fingerTable.get(0).getId()) {
+        if (chordIdInBetween(id, this.info, this.fingerTable.get(0))) {
             return fingerTable.get(0);
         } else {
             PeerInfo closestPeer = this.closestPrecedingPeer(id);
@@ -136,7 +140,7 @@ public class Peer implements ChordNode {
 
     private PeerInfo closestPrecedingPeer(long id) {
         for (int i = fingerTable.size() - 1; i >= 0; i--) {
-            if (fingerTable.get(i).getId() < id && fingerTable.get(i).getId() > this.getId()) {
+            if (fingerTable.get(i) != null && chordIdInBetween(fingerTable.get(i).getId(), this.info.getId(), id)) {
                 return fingerTable.get(i);
             }
         }
@@ -145,6 +149,22 @@ public class Peer implements ChordNode {
 
     public PeerInfo getPredecessor() {
         return this.predecessor;
+    }
+
+    public boolean chordIdInBetween(long id, PeerInfo peer1, PeerInfo peer2) {
+        if (peer1.getId() < peer2.getId()) {
+            return peer1.getId() < id && id < peer2.getId();
+        } else {
+            return (peer1.getId() < id && id < Math.pow(2, m)) || (0 <= id && id < peer2.getId());
+        }
+    }
+
+    public boolean chordIdInBetween(long id, long peer1, long peer2) {
+        if (peer1 < peer2) {
+            return peer1 < id && id < peer2;
+        } else {
+            return (peer1 < id && id < Math.pow(2, m)) || (0 <= id && id < peer2);
+        }
     }
 
     public void stabilize() {
@@ -158,11 +178,12 @@ public class Peer implements ChordNode {
             e.printStackTrace();
         }
 
-        if (ni != null && (ni.getId() < this.fingerTable.get(0).getId() && ni.getId() > this.getId())) {
+
+        if (ni != null && chordIdInBetween(ni.getId(), this.info, this.fingerTable.get(0))) {
             fingerTable.set(0, ni);
         }
 
-        if(ni != null && ( this.fingerTable.get(0).getId() == this.getId()))
+        if (ni != null && (this.fingerTable.get(0).getId() == this.getId()))
             fingerTable.set(0, ni);
 
         this.sendNotification(this.fingerTable.get(0));
@@ -180,7 +201,9 @@ public class Peer implements ChordNode {
             stub = (ChordNode) registry.lookup(String.valueOf(peer.getId()));
             PeerInfo response = stub.findSuccessor(this.getId());
             System.out.println("XXXXXXXXXXXXXXXXXXXXXXXX");
+
             fingerTable.set(0, response);
+
             System.out.println("ZZZZZZZZZZZZZZZZZZZZZZZZ");
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
@@ -210,7 +233,8 @@ public class Peer implements ChordNode {
 
     public boolean notify(PeerInfo node) throws RemoteException {
         System.out.println("Got notified by: " + node);
-        if (this.predecessor == null || (node.getId() > this.predecessor.getId() && node.getId() < this.info.getId())) {
+        if (this.predecessor == null || chordIdInBetween(node.getId(), this.predecessor, this.info)) {
+            System.out.println("My new predecessor is: " + node);
             this.predecessor = node;
             return true;
         }
@@ -225,7 +249,7 @@ public class Peer implements ChordNode {
         }
         System.out.println("Starting Fix Finger" + (next - 1));
         try {
-            fingerTable.set(next - 1, findSuccessor((this.getId() + (int) Math.pow(2, next - 1)) % (int)Math.pow(2, m)));
+            fingerTable.set(next - 1, findSuccessor((this.getId() + (int) Math.pow(2, next - 1)) % (int) Math.pow(2, m)));
         } catch (RemoteException e) {
             e.printStackTrace();
         }
