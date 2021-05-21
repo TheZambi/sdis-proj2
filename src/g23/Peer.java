@@ -1,10 +1,10 @@
 package g23;
 
-import java.io.BufferedInputStream;
+import g23.Chunk;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -13,9 +13,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Peer implements ChordNode {
 
@@ -35,12 +33,38 @@ public class Peer implements ChordNode {
 
     private int next; //Used for fix_fingers method
 
-    private ServerSocket serverSocket;
+    private ConnectionDispatcher connectionDispatcher;
 
-
+    ConcurrentMap<String, Chunk> storedChunks;
+    ConcurrentMap<String, FileInfo> files; // FileHash -> FileInfo
+    ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
+    ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
+    ConcurrentMap<String, List<Integer>> chunksToRestore;
     private ScheduledExecutorService stabilizer;
+
     private ScheduledExecutorService fingerFixer;
     private ScheduledExecutorService predecessorChecker;
+    private ScheduledExecutorService protocolPool;
+
+    long maxSpace = 100000000000L; // bytes
+    long currentSpace = 0; // bytes
+
+    public static void main(String[] args) throws IOException {
+
+        String address = args[0].split(":")[0];
+        int port = Integer.parseInt(args[0].split(":")[1]);
+
+        Peer peer = new Peer(new InetSocketAddress(address, port));
+        if (args.length == 2) {
+            String toJoinAddress = args[1].split(":")[0];
+            int toJoinPort = Integer.parseInt(args[1].split(":")[1]);
+
+            InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
+            peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
+        }
+
+//        peer.communicate();
+    }
 
     public Peer(InetSocketAddress address) throws IOException {
 
@@ -55,7 +79,7 @@ public class Peer implements ChordNode {
 
         fingerTable.set(0, this.info);
 
-        this.serverSocket = new ServerSocket(address.getPort());
+        this.connectionDispatcher = new ConnectionDispatcher(this);
 
         this.predecessor = null;
         this.fingerTable.set(0, new PeerInfo(address, Peer.calculateID(address)));
@@ -63,6 +87,9 @@ public class Peer implements ChordNode {
         this.stabilizer = Executors.newSingleThreadScheduledExecutor();
         this.fingerFixer = Executors.newSingleThreadScheduledExecutor();
         this.predecessorChecker = Executors.newSingleThreadScheduledExecutor();
+        this.protocolPool = Executors.newScheduledThreadPool(16);
+
+        this.files = new ConcurrentHashMap<>();
 
         this.bindRMI(this.info.getId());
 
@@ -295,43 +322,80 @@ public class Peer implements ChordNode {
         return info.getAddress();
     }
 
-    public void communicate() throws IOException {
-        while (true) {
-            Socket socket = this.serverSocket.accept();
+//    public void communicate() throws IOException {
+//        while (true) {
+//            Socket socket = this.serverSocket.accept();
+//
+//            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
+//            System.out.println("Accepted");
+//
+//            byte[] readData = new byte[64000];
+//            int nRead = in.read(readData, 0, 64000);
+//
+//            byte[] aux = Arrays.copyOfRange(readData, 0, nRead);
+//
+//            System.out.println(nRead);
+//
+//            String[] data = (new String(aux)).split(" ");
+//
+//            System.out.println(data[1].split("\0")[0]);
+//        }
+//
+//    }
 
-            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
-            System.out.println("Accepted");
+    public static String getFileIdString(String path, long peerID) {
+        MessageDigest digest = null;
 
-            byte[] readData = new byte[64000];
-            int nRead = in.read(readData, 0, 64000);
+        File file = new File(path);
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        byte[] hash = digest.digest((path + file.lastModified() + peerID).getBytes());
 
-            byte[] aux = Arrays.copyOfRange(readData, 0, nRead);
-
-            System.out.println(nRead);
-
-            String[] data = (new String(aux)).split(" ");
-
-            System.out.println(data[1].split("\0")[0]);
+        StringBuilder result = new StringBuilder();
+        for (byte b : hash) {
+            result.append(Character.forDigit((b >> 4) & 0xF, 16))
+                    .append(Character.forDigit((b & 0xF), 16));
         }
 
+        return result.toString();
     }
 
-
-    public static void main(String[] args) throws IOException {
-
-        String address = args[0].split(":")[0];
-        int port = Integer.parseInt(args[0].split(":")[1]);
-
-        Peer peer = new Peer(new InetSocketAddress(address, port));
-        if (args.length == 2) {
-            String toJoinAddress = args[1].split(":")[0];
-            int toJoinPort = Integer.parseInt(args[1].split(":")[1]);
-
-            InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
-            peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
-        }
-
-        peer.communicate();
+    public String getProtocolVersion() {
+        return "1.0";
     }
 
+    public ScheduledExecutorService getProtocolPool() {
+        return protocolPool;
+    }
+
+    public ConcurrentMap<String, FileInfo> getFiles() {
+        return files;
+    }
+
+    public ConcurrentMap<String, Chunk> getChunks() {
+        return storedChunks;
+    }
+
+    public long getRemainingSpace(){
+        return maxSpace - currentSpace;
+    }
+
+    public void addSpace(int length) {
+        this.currentSpace += length;
+    }
+
+    public ConcurrentMap<String, ScheduledFuture<?>> getBackupsToSend() {
+        return backupsToSend;
+    }
+
+    public ConcurrentMap<String, ScheduledFuture<?>> getMessagesToSend() {
+        return messagesToSend;
+    }
+
+    public long getCurrentSpace(){
+        return currentSpace;
+    }
 }
