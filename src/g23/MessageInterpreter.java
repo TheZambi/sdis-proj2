@@ -1,7 +1,7 @@
 package g23;
 
 import g23.Messages.Message;
-import g23.Protocols.ReceiveChunk;
+import g23.Protocols.ReceiveFile;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -24,8 +24,8 @@ public class MessageInterpreter implements Runnable {
             Message msg = (Message) ois.readObject();
 
             switch (msg.getType()) {
-                case PUTCHUNK -> {
-                    new ReceiveChunk(this.peer, msg).handleMessage();
+                case PUTFILE -> {
+                    new ReceiveFile(this.peer, msg).handleMessage();
                 }
             }
         } catch (Exception e) {

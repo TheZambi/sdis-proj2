@@ -35,9 +35,9 @@ public class PeerState implements Serializable {
             result += "Desired Replication Degree: " + entry.getValue().getDesiredReplicationDegree() + "\n";
 
             result += "Chunks: \n";
-            for (Chunk c : entry.getValue().getChunksPeers()) {
-                result += "\t" + c.getFileId() + "-" + c.getChunkNumber() + " -> Perceived Replication Degree: " + c.getPerceivedReplicationDegree() + "\n";
-            }
+//            for (Chunk c : entry.getValue().getFilesPeers()) {
+//                result += "\t" + c.getFileId() + "-" + c.getChunkNumber() + " -> Perceived Replication Degree: " + c.getPerceivedReplicationDegree() + "\n";
+//            }
 
         }
 

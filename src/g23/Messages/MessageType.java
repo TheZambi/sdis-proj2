@@ -3,7 +3,7 @@ package g23.Messages;
 public enum MessageType {
     STORED,
     GETCHUNK,
-    PUTCHUNK,
+    PUTFILE,
     CHUNK,
     DELETE,
     REMOVED,

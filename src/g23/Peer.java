@@ -1,6 +1,7 @@
 package g23;
 
 import g23.Chunk;
+import g23.Protocols.Backup;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +63,11 @@ public class Peer implements ChordNode {
             InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
             peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
         }
+    }
+
+    public PeerInfo getSuccessor()
+    {
+        return this.fingerTable.get(0);
     }
 
     public Peer(InetSocketAddress address) throws IOException {
@@ -178,7 +184,7 @@ public class Peer implements ChordNode {
 
     @Override
     public void backup(String path, int replicationDegree) throws RemoteException {
-
+        this.protocolPool.execute(new Backup(this, path, replicationDegree, replicationDegree));
     }
 
     @Override
@@ -328,6 +334,8 @@ public class Peer implements ChordNode {
                 e.printStackTrace();
                 System.out.println("Ending Check For Predecessors : Return False");
 
+                this.predecessor = null;
+
                 return false;
             }
 
@@ -344,27 +352,6 @@ public class Peer implements ChordNode {
     public InetSocketAddress getAddress() {
         return info.getAddress();
     }
-
-//    public void communicate() throws IOException {
-//        while (true) {
-//            Socket socket = this.serverSocket.accept();
-//
-//            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
-//            System.out.println("Accepted");
-//
-//            byte[] readData = new byte[64000];
-//            int nRead = in.read(readData, 0, 64000);
-//
-//            byte[] aux = Arrays.copyOfRange(readData, 0, nRead);
-//
-//            System.out.println(nRead);
-//
-//            String[] data = (new String(aux)).split(" ");
-//
-//            System.out.println(data[1].split("\0")[0]);
-//        }
-//
-//    }
 
     public String getProtocolVersion() {
         return "1.0";

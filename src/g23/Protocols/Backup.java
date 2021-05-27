@@ -2,84 +2,102 @@ package g23.Protocols;
 
 import g23.Messages.*;
 import g23.Peer;
-import g23.FileInfo;
 import g23.PeerInfo;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 
 public class Backup implements Runnable {
     private final Peer peer;
     private final String path;
     private final int replicationDegree;
+    private final int currentReplicationDegree;
+    private final Message message;
 
-    public Backup(Peer peer, String path, int replicationDegree) {
+
+    public Backup(Peer peer, String path, int replicationDegree, int currentReplicationDegree) {
         this.peer = peer;
         this.path = path;
         this.replicationDegree = replicationDegree;
+        this.currentReplicationDegree = currentReplicationDegree;
+        this.message = null;
+    }
+
+    public Backup(Peer peer, Message message) {
+        this.peer = null;
+        this.path = null;
+        this.replicationDegree = -1;
+        this.currentReplicationDegree = -1;
+        this.message = message;
     }
 
     @Override
     public void run() {
 
-//        File fileToBackup = new File(path);
-//        if(!fileToBackup.exists() || fileToBackup.isDirectory() || fileToBackup.length() > 64000000000L) {
-//            peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
-//            System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
-//            return;
-//        }
+        if (message == null) {
+            Path filePath = Path.of(path);
+            try {
+                if(!Files.exists(filePath) || Files.isDirectory(filePath) || Files.size(filePath) > 64000000000L) {
+                    //            peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
+                    System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
+                    return;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
+            long hash = Peer.getFileId(path, peer.getId());
+            String[] msgArgs = {this.peer.getProtocolVersion(),
+                    String.valueOf(this.peer.getId()),
+                    String.valueOf(hash),
+                    "0", // CHUNK NO
+                    String.valueOf(replicationDegree),
+                    String.valueOf(currentReplicationDegree)
+            };
 
-        long hash = Peer.getFileId(path, peer.getId());
-        String[] msgArgs = {this.peer.getProtocolVersion(),
-                String.valueOf(this.peer.getId()),
-                String.valueOf(hash),
-                "0", // CHUNK NO
-                String.valueOf(replicationDegree)};
+            try {
+                long fileId = Peer.getFileId(this.path, this.peer.getId());
+                PeerInfo succID = this.peer.findSuccessor(fileId);
 
-        try {
-            long fileId = Peer.getFileId(this.path, this.peer.getId());
-            PeerInfo succID = this.peer.findSuccessor(fileId);
+                byte[] fileToSend = Files.readAllBytes(Path.of(this.path));
+                Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, fileToSend);
 
-            byte[] fileToSend = Files.readAllBytes(Path.of(this.path));
-            Message msgToSend = new Message(MessageType.PUTCHUNK, msgArgs, fileToSend);
+                Socket socket = new Socket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                oos.writeObject(msgToSend);
 
-            try ()
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //Backup to successor until replication degree is reached
+            try {
+                PeerInfo successor = peer.getSuccessor();
+                Socket socket = new Socket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 
-        } catch (IOException e) {
-            e.printStackTrace();
+                oos.writeObject(this.message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
 //        byte[] data;
 //        int nRead = -1;
 //        int nChunk = 0;
 //        try (FileInputStream file = new FileInputStream(path)) {
-//            while (nRead != 0) {
-//                data = new byte[64000];
-//                nRead = file.read(data, 0, 64000);
-//                if(nRead == -1)
-//                    nRead = 0;
-//                Message msgToSend;
-//                msgArgs[3] = String.valueOf(nChunk); // set chunk number
-//                nChunk++;
-//                if (nRead < 64000) {
-//                    byte[] dataToSend = new byte[nRead];
-//                    System.arraycopy(data, 0, dataToSend, 0, nRead);
-//                    msgToSend = new Message(MessageType.PUTCHUNK, msgArgs, dataToSend);
-//                    nRead = 0; // Used to terminate the loop if the the last chunk doesn't have 64 KB
-//                } else {
-//                    msgToSend = new Message(MessageType.PUTCHUNK, msgArgs, data);
-//                }
-//                this.peer.getProtocolPool().execute(new PutChunkMessageSender(this.peer, msgToSend, replicationDegree, 5));
-//            }
 
-            FileInfo fileInfo = new FileInfo(path, hash, replicationDegree, nChunk);
-            if(this.peer.getFiles().containsKey(hash)) {
-                fileInfo.setChunksPeers(this.peer.getFiles().get(hash).getChunksPeers());
-            }
-            this.peer.getFiles().put(hash, fileInfo);
+            // read chunks
+
+//            FileInfo fileInfo = new FileInfo(path, hash, replicationDegree, nChunk);
+//            if(this.peer.getFiles().containsKey(hash)) {
+//                fileInfo.setChunksPeers(this.peer.getFiles().get(hash).getChunksPeers());
+//            }
+//            this.peer.getFiles().put(hash, fileInfo);
 
 //        } catch (Exception e) {
 //            e.printStackTrace();

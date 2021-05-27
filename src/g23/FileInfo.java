@@ -11,7 +11,7 @@ public class FileInfo implements Serializable {
     private final int desiredReplicationDegree;
     private ChordNode peerInfo;
 
-    public FileInfo(String path, String hash, int desiredReplicationDegree, ChordNode peerInfo) {
+    public FileInfo(String path, String hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
         this.path = path;
         this.hash = hash;
         this.desiredReplicationDegree = desiredReplicationDegree;
@@ -29,6 +29,8 @@ public class FileInfo implements Serializable {
     public int getDesiredReplicationDegree() {
         return desiredReplicationDegree;
     }
+
+
 
 //    public int getChunkAmount() {
 //        return chunksPeers.size();

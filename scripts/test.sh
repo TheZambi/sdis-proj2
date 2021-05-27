@@ -80,4 +80,4 @@ esac
 
 # echo "java g03.TestApp ${pap} ${oper} ${opernd_1} ${rep_deg}"
 
-java g03.TestApp ${pap} ${oper} ${opernd_1} ${rep_deg}
+java g23.TestApp ${pap} ${oper} ${opernd_1} ${rep_deg}

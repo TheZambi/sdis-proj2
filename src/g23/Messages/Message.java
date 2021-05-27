@@ -11,6 +11,7 @@ public class Message implements Serializable {
     private String fileId;
     private int chunkNumber = -1;
     private int replicationDegree = -1;
+    private int currentReplicationsDegree = -1;
     private byte[] body;
     private int port = -1;
 
@@ -30,18 +31,26 @@ public class Message implements Serializable {
 
         if(this.type != MessageType.DELETE && this.type != MessageType.DELETED)
             this.chunkNumber = Integer.parseInt(header[4]);
-        if(this.type == MessageType.PUTCHUNK)
+        if(this.type == MessageType.PUTFILE)
             this.replicationDegree = Integer.parseInt(header[5]);
 
         int indexBody = packetStr.indexOf("\r\n\r\n");
         if(indexBody + 4 >= packet.length) {
-            if(type == MessageType.PUTCHUNK || type == MessageType.CHUNK)
+            if(type == MessageType.PUTFILE || type == MessageType.CHUNK)
                 this.body = new byte[0];
             else
                 this.body = null;
         }
         else
             this.body = Arrays.copyOfRange(packet, indexBody + 4, packet.length);
+    }
+
+    public int getCurrentReplicationDegree() {
+        return currentReplicationsDegree;
+    }
+
+    public void decrementCurrentReplication() {
+        this.currentReplicationsDegree--;
     }
 
     public Message(MessageType type, String[] args, byte[] body) {
@@ -51,7 +60,7 @@ public class Message implements Serializable {
         this.fileId = args[2];
         this.body = body;
 
-        if(type == MessageType.PUTCHUNK) {
+        if(type == MessageType.PUTFILE) {
             this.chunkNumber = Integer.parseInt(args[3]);
             this.replicationDegree = Integer.parseInt(args[4]);
 
