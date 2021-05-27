@@ -35,7 +35,7 @@ public class Peer implements ChordNode {
 
     private ConnectionDispatcher connectionDispatcher;
 
-    ConcurrentMap<String, Chunk> storedChunks;
+    ConcurrentMap<String, FileInfo> storedFiles;
     ConcurrentMap<String, FileInfo> files; // FileHash -> FileInfo
     ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
     ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
@@ -62,8 +62,6 @@ public class Peer implements ChordNode {
             InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
             peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
         }
-
-//        peer.communicate();
     }
 
     public Peer(InetSocketAddress address) throws IOException {
@@ -176,6 +174,31 @@ public class Peer implements ChordNode {
 
     public PeerInfo getPredecessor() {
         return this.predecessor;
+    }
+
+    @Override
+    public void backup(String path, int replicationDegree) throws RemoteException {
+
+    }
+
+    @Override
+    public void restore(String path) throws RemoteException {
+
+    }
+
+    @Override
+    public void delete(String path) throws RemoteException {
+
+    }
+
+    @Override
+    public void reclaim(long amountOfBytes) throws RemoteException {
+
+    }
+
+    @Override
+    public PeerState state() throws RemoteException {
+        return null;
     }
 
     public boolean chordIdInBetween(long id, PeerInfo peer1, PeerInfo peer2) {
@@ -343,26 +366,6 @@ public class Peer implements ChordNode {
 //
 //    }
 
-    public static String getFileIdString(String path, long peerID) {
-        MessageDigest digest = null;
-
-        File file = new File(path);
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        byte[] hash = digest.digest((path + file.lastModified() + peerID).getBytes());
-
-        StringBuilder result = new StringBuilder();
-        for (byte b : hash) {
-            result.append(Character.forDigit((b >> 4) & 0xF, 16))
-                    .append(Character.forDigit((b & 0xF), 16));
-        }
-
-        return result.toString();
-    }
-
     public String getProtocolVersion() {
         return "1.0";
     }
@@ -375,8 +378,8 @@ public class Peer implements ChordNode {
         return files;
     }
 
-    public ConcurrentMap<String, Chunk> getChunks() {
-        return storedChunks;
+    public ConcurrentMap<String, FileInfo> getStoredFiles() {
+        return storedFiles;
     }
 
     public long getRemainingSpace(){
@@ -397,5 +400,29 @@ public class Peer implements ChordNode {
 
     public long getCurrentSpace(){
         return currentSpace;
+    }
+
+    public static long getFileId(String path, long peerID) {
+//        MessageDigest digest = null;
+//
+//        File file = new File(path);
+//
+//        try {
+//            digest = MessageDigest.getInstance("SHA-256");
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        }
+//        byte[] hash = digest.digest((path + file.lastModified() + peerID).getBytes());
+//
+//        StringBuilder result = new StringBuilder();
+//        for (byte b : hash) {
+//            result.append(Character.forDigit((b >> 4) & 0xF, 16))
+//                    .append(Character.forDigit((b & 0xF), 16));
+//        }
+
+
+//        return result.toString();
+
+        return 5;
     }
 }

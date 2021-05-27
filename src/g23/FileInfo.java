@@ -9,16 +9,13 @@ public class FileInfo implements Serializable {
     private final String path;
     private final String hash;
     private final int desiredReplicationDegree;
-    private List<Chunk> chunksPeers;
+    private ChordNode peerInfo;
 
-    public FileInfo(String path, String hash, int desiredReplicationDegree, int chunkAmount) {
+    public FileInfo(String path, String hash, int desiredReplicationDegree, ChordNode peerInfo) {
         this.path = path;
         this.hash = hash;
         this.desiredReplicationDegree = desiredReplicationDegree;
-        this.chunksPeers = new ArrayList<>();
-        for(int i = 0; i < chunkAmount; ++i) {
-            chunksPeers.add(new Chunk(hash, i, desiredReplicationDegree, -1));
-        }
+        this.peerInfo = peerInfo;
     }
 
     public String getPath() {
@@ -33,21 +30,21 @@ public class FileInfo implements Serializable {
         return desiredReplicationDegree;
     }
 
-    public int getChunkAmount() {
-        return chunksPeers.size();
+//    public int getChunkAmount() {
+//        return chunksPeers.size();
+//    }
+
+    public ChordNode getPeerInfo() {
+        return peerInfo;
     }
 
-    public List<Chunk> getChunksPeers() {
-        return chunksPeers;
-    }
+    public void setPeerInfo(ChordNode peerInfo) { this.peerInfo = peerInfo; }
 
-    public void setChunksPeers(List<Chunk> chunksPeers) { this.chunksPeers = chunksPeers; }
-
-    public boolean allSent() {
-        for(Chunk chunk : chunksPeers) {
-            if(!chunk.isSent())
-                return false;
-        }
-        return true;
-    }
+//    public boolean allSent() {
+//        for(Chunk chunk : chunksPeers) {
+//            if(!chunk.isSent())
+//                return false;
+//        }
+//        return true;
+//    }
 }

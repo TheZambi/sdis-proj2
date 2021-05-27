@@ -1,8 +1,9 @@
 package g23.Messages;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Message {
+public class Message implements Serializable {
 
     private String protocolVersion;
     private MessageType type;
