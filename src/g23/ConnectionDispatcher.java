@@ -12,7 +12,7 @@ public class ConnectionDispatcher implements Runnable {
     public ConnectionDispatcher(Peer peer) {
         this.peer = peer;
         try {
-            this.serverSocket = new ServerSocket(peer.getAddress().getPort());
+            this.serverSocket = new ServerSocket(peer.getAddress().getPort(),5, peer.getAddress().getAddress());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -24,6 +24,7 @@ public class ConnectionDispatcher implements Runnable {
             Socket socket = null;
             try {
                 System.out.println("Starting to accept connection");
+                System.out.println(serverSocket);
                 socket = this.serverSocket.accept();
                 System.out.println("Accepted");
 

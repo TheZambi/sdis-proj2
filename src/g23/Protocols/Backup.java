@@ -79,6 +79,7 @@ public class Backup implements Runnable {
                     System.out.println(this.peer.getSuccessor().getAddress().getPort());
                     socket = new Socket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
                 }
+                System.out.println(socket);
                 System.out.println("Created socket");
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject(msgToSend);

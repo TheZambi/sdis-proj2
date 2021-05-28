@@ -146,7 +146,7 @@ public class Peer implements ChordNode {
 //        long idInt = id.getLeastSignificantBits() * -1;
 ////        idInt = Math.round(idInt % Math.pow(2, Peer.m));
 
-        long idInt = address.getPort() - 5000;
+        long idInt = address.getPort() - 8000;
         idInt = Math.round(idInt % Math.pow(2, Peer.m));
         return idInt;
     }

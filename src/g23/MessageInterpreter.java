@@ -24,9 +24,9 @@ public class MessageInterpreter implements Runnable {
             Message msg = (Message) ois.readObject();
 
             switch (msg.getType()) {
-                case PUTFILE -> {
+                case PUTFILE :
                     new ReceiveFile(this.peer, msg).handleMessage();
-                }
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
