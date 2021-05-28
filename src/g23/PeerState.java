@@ -9,17 +9,17 @@ public class PeerState implements Serializable {
     long maxSpace; // bytes
     long currentSpace; // bytes
 
-    Map<String, Chunk> storedChunks;
     Map<String, FileInfo> files; // FileHash -> FileInfo
+    Map<String, FileInfo> storedfiles; // FileHash -> FileInfo
     Map<String, Set<Integer>> peersDidNotDeleteFiles;
     Set<String> onGoingOperations;
 
 
-    public PeerState(long maxSpace, long currentSpace, Map<String, Chunk> storedChunks, Map<String, FileInfo> files, Map<String, Set<Integer>> deleted, Set<String> ongoing) {
+    public PeerState(long maxSpace, long currentSpace, Map<String, FileInfo> files, Map<String, FileInfo> storedFiles, Map<String, Set<Integer>> deleted, Set<String> ongoing) {
         this.maxSpace = maxSpace;
         this.currentSpace = currentSpace;
-        this.storedChunks = storedChunks;
         this.files = files;
+        this.storedfiles = storedFiles;
         this.peersDidNotDeleteFiles = deleted;
         this.onGoingOperations = ongoing;
     }
@@ -33,21 +33,14 @@ public class PeerState implements Serializable {
             result += "Name: " + entry.getValue().getPath() + "\n";
             result += "File ID: " + entry.getKey() + "\n";
             result += "Desired Replication Degree: " + entry.getValue().getDesiredReplicationDegree() + "\n";
-
-            result += "Chunks: \n";
-//            for (Chunk c : entry.getValue().getFilesPeers()) {
-//                result += "\t" + c.getFileId() + "-" + c.getChunkNumber() + " -> Perceived Replication Degree: " + c.getPerceivedReplicationDegree() + "\n";
-//            }
-
         }
 
-        result += "---------------STORED CHUNKS---------------\n";
-        for (Map.Entry<String, Chunk> entry : storedChunks.entrySet()){
+        result += "---------------STORED FILES---------------\n";
+        for (Map.Entry<String, FileInfo> entry : storedfiles.entrySet()){
             result += "-------------Chunk---------------\n";
-            result += "Chunk ID: " + entry.getValue().getFileId() + "-" + entry.getValue().getChunkNumber() + "\n";
+            result += "File ID: " + entry.getValue().getHash() + "\n";
             result += "Size: " + entry.getValue().getSize() / 1000 + "KB\n";
             result += "Desired Replication Degree: " + entry.getValue().getDesiredReplicationDegree() + "\n";
-            result += "Perceived Replication Degree: " + entry.getValue().getPerceivedReplicationDegree() + "\n";
         }
 
         result += "------------------STORAGE------------------\n";

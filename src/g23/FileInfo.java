@@ -7,22 +7,33 @@ import java.util.List;
 public class FileInfo implements Serializable {
 
     private final String path;
-    private final String hash;
+    private final long hash;
     private final int desiredReplicationDegree;
     private ChordNode peerInfo;
+    private long size;
 
-    public FileInfo(String path, String hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
+    public FileInfo(String path, long hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
         this.path = path;
         this.hash = hash;
         this.desiredReplicationDegree = desiredReplicationDegree;
         this.peerInfo = peerInfo;
+        this.size = -1;
+    }
+
+    public FileInfo(String path, long hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo, long size) {
+        this(path, hash, currentReplicationDegree, desiredReplicationDegree, peerInfo);
+        this.size = size;
+    }
+
+    public long getSize() {
+        return this.size;
     }
 
     public String getPath() {
         return path;
     }
 
-    public String getHash() {
+    public long getHash() {
         return hash;
     }
 

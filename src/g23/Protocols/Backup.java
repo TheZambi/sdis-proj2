@@ -1,5 +1,6 @@
 package g23.Protocols;
 
+import g23.FileInfo;
 import g23.Messages.*;
 import g23.Peer;
 import g23.PeerInfo;
@@ -28,11 +29,11 @@ public class Backup implements Runnable {
     }
 
     public Backup(Peer peer, Message message) {
-        this.peer = null;
+        this.peer = peer;
         this.path = null;
-        this.replicationDegree = -1;
-        this.currentReplicationDegree = -1;
         this.message = message;
+        this.replicationDegree = message.getReplicationDegree();
+        this.currentReplicationDegree = message.getCurrentReplicationDegree();
     }
 
     @Override
@@ -41,8 +42,8 @@ public class Backup implements Runnable {
         if (message == null) {
             Path filePath = Path.of(path);
             try {
-                if(!Files.exists(filePath) || Files.isDirectory(filePath) || Files.size(filePath) > 64000000000L) {
-                    //            peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
+                if (!Files.exists(filePath) || Files.isDirectory(filePath) || Files.size(filePath) > 64000000000L) {
+                    // peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
                     System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
                     return;
                 }
@@ -51,10 +52,9 @@ public class Backup implements Runnable {
             }
 
             long hash = Peer.getFileId(path, peer.getId());
-            String[] msgArgs = {this.peer.getProtocolVersion(),
+            String[] msgArgs = {
                     String.valueOf(this.peer.getId()),
                     String.valueOf(hash),
-                    "0", // CHUNK NO
                     String.valueOf(replicationDegree),
                     String.valueOf(currentReplicationDegree)
             };
@@ -69,22 +69,20 @@ public class Backup implements Runnable {
                 Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, fileToSend);
 
                 Socket socket;
-                if(succID.getId() != this.peer.getId()) {
+                if (succID.getId() != this.peer.getId()) {
                     socket = new Socket(succID.getAddress().getAddress(), succID.getAddress().getPort());
-                }
-                else
-                {
-                    System.out.println("Sending to successor");
-                    System.out.println(this.peer.getSuccessor().getAddress().getAddress());
-                    System.out.println(this.peer.getSuccessor().getAddress().getPort());
+                } else {
                     socket = new Socket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
                 }
                 System.out.println(socket);
+                System.out.println("Sending BACKUP to " + socket.getPort());
+                System.out.println(msgToSend.getCurrentReplicationDegree());
                 System.out.println("Created socket");
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject(msgToSend);
                 System.out.println("Finished Writing");
 
+                this.peer.getFiles().put(hash, new FileInfo(path, hash, currentReplicationDegree, replicationDegree, peer));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -94,6 +92,8 @@ public class Backup implements Runnable {
                 PeerInfo successor = peer.getSuccessor();
                 Socket socket = new Socket(successor.getAddress().getAddress(), successor.getAddress().getPort());
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+                System.out.println("Sending BACKUP (propagation) to " + socket.getPort());
 
                 oos.writeObject(this.message);
             } catch (IOException e) {
@@ -106,7 +106,7 @@ public class Backup implements Runnable {
 //        int nChunk = 0;
 //        try (FileInputStream file = new FileInputStream(path)) {
 
-            // read chunks
+        // read chunks
 
 //            FileInfo fileInfo = new FileInfo(path, hash, replicationDegree, nChunk);
 //            if(this.peer.getFiles().containsKey(hash)) {

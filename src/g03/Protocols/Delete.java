@@ -32,9 +32,7 @@ public class Delete implements Runnable {
 
         matches.forEach((match) -> {
             String hash = match.getValue().getHash();
-            String[] msgArgs = {this.peer.getProtocolVersion(),
-                    String.valueOf(this.peer.getId()),
-                    hash};
+            String[] msgArgs = {String.valueOf(this.peer.getId()), hash};
             Message deleteMsg = new Message(MessageType.DELETE, msgArgs, null);
 
             try {

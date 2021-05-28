@@ -1,9 +1,7 @@
 package g23;
 
-import g23.Chunk;
 import g23.Protocols.Backup;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
@@ -11,8 +9,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -24,7 +20,7 @@ public class Peer implements ChordNode {
     private static final int FINGER_FIXER_INTERVAL = 500;
     private static final int PREDECESSOR_CHECKER_INTERVAL = 5;
 
-    private PeerInfo info;
+    private final PeerInfo info;
 
     private List<PeerInfo> fingerTable;
     private HashMap<String, String> data; //TODO
@@ -36,8 +32,8 @@ public class Peer implements ChordNode {
 
     private ConnectionDispatcher connectionDispatcher;
 
-    ConcurrentMap<String, FileInfo> storedFiles;
-    ConcurrentMap<String, FileInfo> files; // FileHash -> FileInfo
+    ConcurrentMap<Long, FileInfo> storedFiles;
+    ConcurrentMap<Long, FileInfo> files; // FileHash -> FileInfo
     ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
     ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
     ConcurrentMap<String, List<Integer>> chunksToRestore;
@@ -85,8 +81,6 @@ public class Peer implements ChordNode {
 
         fingerTable.set(0, this.info);
 
-        this.connectionDispatcher = new ConnectionDispatcher(this);
-
         this.predecessor = null;
         this.fingerTable.set(0, new PeerInfo(address, Peer.calculateID(address)));
 
@@ -97,7 +91,7 @@ public class Peer implements ChordNode {
         this.protocolPool = Executors.newScheduledThreadPool(16);
 
         this.files = new ConcurrentHashMap<>();
-
+        this.storedFiles = new ConcurrentHashMap<>();
         this.bindRMI(this.info.getId());
 
         this.listenerThread.execute(new ConnectionDispatcher(this));
@@ -105,18 +99,17 @@ public class Peer implements ChordNode {
         this.fingerFixer.scheduleAtFixedRate(this::fix_fingers, Peer.FINGER_FIXER_INTERVAL * 5, Peer.FINGER_FIXER_INTERVAL, TimeUnit.MILLISECONDS);
         this.predecessorChecker.scheduleAtFixedRate(this::check_predecessor, Peer.PREDECESSOR_CHECKER_INTERVAL, Peer.PREDECESSOR_CHECKER_INTERVAL, TimeUnit.SECONDS);
 
-        this.printInfo();
     }
 
     public void printInfo() {
-//        System.out.println("---------INFO--------");
-//        System.out.println("ID: " + this.getId());
-//        System.out.println("IP address: " + this.getAddress().getAddress() + ":" + this.getAddress().getPort());
-//        System.out.println("Predecessor: " + this.predecessor);
-//        for (int i = 0; i < Peer.m; i++) {
-//            System.out.println("Finger " + i + ":" + fingerTable.get(i));
-//        }
-//        System.out.println("----------------------");
+        System.out.println("---------INFO--------");
+        System.out.println("ID: " + this.getId());
+        System.out.println("IP address: " + this.getAddress().getAddress() + ":" + this.getAddress().getPort());
+        System.out.println("Predecessor: " + this.predecessor);
+        for (int i = 0; i < Peer.m; i++) {
+            System.out.println("Finger " + i + ":" + fingerTable.get(i));
+        }
+        System.out.println("----------------------");
     }
 
     public void bindRMI(long id) throws RemoteException {
@@ -248,7 +241,7 @@ public class Peer implements ChordNode {
 
         this.sendNotification(this.fingerTable.get(0));
 //        System.out.println("Ending Stabilization");
-        printInfo();
+//        printInfo();
     }
 
     public void join(PeerInfo peer) {
@@ -268,7 +261,7 @@ public class Peer implements ChordNode {
         }
 
 //        System.out.println("JOINED - SUCCESSOR: " + this.fingerTable.get(0).getId());
-        this.printInfo();
+//        this.printInfo();
     }
 
 
@@ -303,6 +296,8 @@ public class Peer implements ChordNode {
 
         next += 1;
         if (next > m) {
+//            this.printInfo();
+
             next = 1;
         }
 //        System.out.println("Starting Fix Finger" + (next - 1));
@@ -312,7 +307,7 @@ public class Peer implements ChordNode {
             e.printStackTrace();
         }
 //        System.out.println("Ending Fix Finger" + (next - 1));
-        printInfo();
+//        printInfo();
 
     }
 
@@ -363,11 +358,11 @@ public class Peer implements ChordNode {
         return protocolPool;
     }
 
-    public ConcurrentMap<String, FileInfo> getFiles() {
+    public ConcurrentMap<Long, FileInfo> getFiles() {
         return files;
     }
 
-    public ConcurrentMap<String, FileInfo> getStoredFiles() {
+    public ConcurrentMap<Long, FileInfo> getStoredFiles() {
         return storedFiles;
     }
 
