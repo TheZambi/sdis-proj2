@@ -174,6 +174,10 @@ public class Peer implements ChordNode {
         return this.info;
     }
 
+    public PeerInfo getPeerInfo() {
+        return this.info;
+    }
+
     public PeerInfo getPredecessor() {
         return this.predecessor;
     }
@@ -369,7 +373,7 @@ public class Peer implements ChordNode {
         return maxSpace - currentSpace;
     }
 
-    public void addSpace(int length) {
+    public void addSpace(long length) {
         this.currentSpace += length;
     }
 

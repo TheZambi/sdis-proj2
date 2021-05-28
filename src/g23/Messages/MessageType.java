@@ -8,6 +8,7 @@ public enum MessageType {
     DELETE,
     REMOVED,
     DELETED,
+    IWANT,
     FAIL,
     UNKNOWN
 }
