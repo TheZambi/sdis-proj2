@@ -72,7 +72,7 @@ public class MC implements Runnable {
 
                                 byte[] body = null;
                                 int port = -1;
-                                System.out.println("RECEIVED GETCHUNK " + key + " FROM " + message.getSenderId());
+                                System.out.println("RECEIVED GETFILE " + key + " FROM " + message.getSenderId());
                                 if (Peer.supportsEnhancement(peer.getProtocolVersion(), Enhancements.RESTORE)
                                         && Peer.supportsEnhancement(message.getProtocolVersion(), Enhancements.RESTORE)) {
                                     port = message.getPort();

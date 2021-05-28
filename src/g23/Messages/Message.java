@@ -61,7 +61,7 @@ public class Message implements Serializable {
 //            header += this.replicationDegree + " ";
 //        }
 //
-//        if(this.type == MessageType.GETCHUNK && this.port != -1) {
+//        if(this.type == MessageType.GETFILE && this.port != -1) {
 //            header += "\r\n " + this.port;
 //        }
 //

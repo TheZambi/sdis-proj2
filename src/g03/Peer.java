@@ -8,6 +8,7 @@ import g03.Enchancements.Enhancements;
 import g03.Messages.Message;
 import g03.Messages.MessageType;
 import g03.Protocols.*;
+import g03.Protocols.Restore;
 
 import java.io.*;
 import java.rmi.AlreadyBoundException;

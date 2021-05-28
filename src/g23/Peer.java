@@ -26,17 +26,16 @@ public class Peer implements ChordNode {
     private HashMap<String, String> data; //TODO
 
     private PeerInfo predecessor;
-//    private PeerInfo successor;
 
     private int next; //Used for fix_fingers method
 
     private ConnectionDispatcher connectionDispatcher;
 
-    ConcurrentMap<Long, FileInfo> storedFiles;
-    ConcurrentMap<Long, FileInfo> files; // FileHash -> FileInfo
-    ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
-    ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
-    ConcurrentMap<String, List<Integer>> chunksToRestore;
+    private ConcurrentMap<Long, FileInfo> storedFiles;
+    private ConcurrentMap<Long, FileInfo> files; // FileHash -> FileInfo
+    private Set<Long> filesToRestore;
+    private ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
+    private ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
     private ScheduledExecutorService stabilizer;
 
     private ScheduledExecutorService fingerFixer;
