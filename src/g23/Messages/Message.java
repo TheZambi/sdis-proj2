@@ -18,7 +18,7 @@ public class Message implements Serializable {
         this.fileId = Long.parseLong(args[1]);
         this.body = body;
 
-        if(type == MessageType.PUTFILE) {
+        if(type == MessageType.PUTFILE || type == MessageType.REMOVED) {
             this.replicationDegree = Integer.parseInt(args[2]);
             this.currentReplicationsDegree = Integer.parseInt(args[3]);
 

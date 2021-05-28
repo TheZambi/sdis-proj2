@@ -1,6 +1,7 @@
 package g23;
 
 import g23.Protocols.Backup;
+import g23.Protocols.Reclaim;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -186,7 +187,6 @@ public class Peer implements ChordNode {
 
     @Override
     public void restore(String path) throws RemoteException {
-
     }
 
     @Override
@@ -195,8 +195,8 @@ public class Peer implements ChordNode {
     }
 
     @Override
-    public void reclaim(long amountOfBytes) throws RemoteException {
-
+    public void reclaim(long amountOfKBytes) throws RemoteException {
+        this.protocolPool.execute(new Reclaim(this, amountOfKBytes * 1000));
     }
 
     @Override
@@ -408,5 +408,14 @@ public class Peer implements ChordNode {
 //        return result.toString();
 
         return 5;
+    }
+
+    public void setMaxSpace(long maxSpace) {
+        this.maxSpace = maxSpace;
+    }
+
+    public long removeSpace(long space) {
+        currentSpace -= space;
+        return currentSpace;
     }
 }
