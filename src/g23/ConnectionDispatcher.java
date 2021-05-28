@@ -23,6 +23,7 @@ public class ConnectionDispatcher implements Runnable {
         while (true) {
             Socket socket = null;
             try {
+                System.out.println("Starting to accept connection");
                 socket = this.serverSocket.accept();
                 System.out.println("Accepted");
 

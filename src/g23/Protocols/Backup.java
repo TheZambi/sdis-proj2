@@ -63,12 +63,26 @@ public class Backup implements Runnable {
                 long fileId = Peer.getFileId(this.path, this.peer.getId());
                 PeerInfo succID = this.peer.findSuccessor(fileId);
 
+                System.out.println(succID);
+
                 byte[] fileToSend = Files.readAllBytes(Path.of(this.path));
                 Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, fileToSend);
 
-                Socket socket = new Socket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                Socket socket;
+                if(succID.getId() != this.peer.getId()) {
+                    socket = new Socket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                }
+                else
+                {
+                    System.out.println("Sending to successor");
+                    System.out.println(this.peer.getSuccessor().getAddress().getAddress());
+                    System.out.println(this.peer.getSuccessor().getAddress().getPort());
+                    socket = new Socket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+                }
+                System.out.println("Created socket");
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject(msgToSend);
+                System.out.println("Finished Writing");
 
             } catch (IOException e) {
                 e.printStackTrace();
