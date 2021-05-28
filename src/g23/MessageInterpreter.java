@@ -1,6 +1,7 @@
 package g23;
 
 import g23.Messages.Message;
+import g23.Protocols.DeleteFile;
 import g23.Protocols.ReceiveFile;
 
 import java.io.BufferedInputStream;
@@ -26,6 +27,9 @@ public class MessageInterpreter implements Runnable {
             switch (msg.getType()) {
                 case PUTFILE :
                     new ReceiveFile(this.peer, msg).handleMessage();
+                    break;
+                case DELETE:
+                    new DeleteFile(this.peer, msg).handleMessage();
                     break;
             }
         } catch (Exception e) {

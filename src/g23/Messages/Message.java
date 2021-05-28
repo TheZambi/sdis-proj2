@@ -25,6 +25,9 @@ public class Message implements Serializable {
         } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = -1;
+        } else if (type == MessageType.DELETE){
+            this.replicationDegree = -1;
+            this.currentReplicationsDegree = Integer.parseInt(args[2]);
         }
     }
 
