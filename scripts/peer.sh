@@ -23,9 +23,15 @@ id=$1
 op_address=$2
 join_address=$3
 
-
 # Execute the program
 # Should not need to change anything but the class and its package, unless you use any jar file
 
-cd test/"${id}" && java -classpath ../.. g23.Peer ${op_address} ${join_address}
+cd test/"${id}" && java -classpath ../.. \
+  -Djavax.net.ssl.keyStore=../../../../keys/server.keys \
+  -Djavax.net.ssl.keyStorePassword=123456 \
+  -Djavax.net.ssl.keyStore=../../../../keys/client.keys \
+  -Djavax.net.ssl.keyStorePassword=123456 \
+  -Djavax.net.ssl.trustStore=../../../../keys/truststore \
+  -Djavax.net.ssl.trustStorePassword=123456 \
+  g23.Peer ${op_address} ${join_address}
 

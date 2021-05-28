@@ -5,6 +5,8 @@ import g23.Messages.*;
 import g23.Peer;
 import g23.PeerInfo;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -68,12 +70,14 @@ public class Backup implements Runnable {
                 byte[] fileToSend = Files.readAllBytes(Path.of(this.path));
                 Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, fileToSend);
 
-                Socket socket;
+                SSLSocket socket;
                 if (succID.getId() != this.peer.getId()) {
-                    socket = new Socket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
                 } else {
-                    socket = new Socket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
                 }
+                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+
                 System.out.println(socket);
                 System.out.println("Sending BACKUP to " + socket.getPort());
                 System.out.println(msgToSend.getCurrentReplicationDegree());
@@ -90,11 +94,11 @@ public class Backup implements Runnable {
             //Backup to successor until replication degree is reached
             try {
                 PeerInfo successor = peer.getSuccessor();
-                Socket socket = new Socket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-
                 System.out.println("Sending BACKUP (propagation) to " + socket.getPort());
-
                 oos.writeObject(this.message);
             } catch (IOException e) {
                 e.printStackTrace();

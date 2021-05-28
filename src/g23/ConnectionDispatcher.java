@@ -1,18 +1,22 @@
 package g23;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 public class ConnectionDispatcher implements Runnable {
 
-    private ServerSocket serverSocket;
+    private SSLServerSocket serverSocket;
     private Peer peer;
 
     public ConnectionDispatcher(Peer peer) {
         this.peer = peer;
         try {
-            this.serverSocket = new ServerSocket(peer.getAddress().getPort(),5, peer.getAddress().getAddress());
+            this.serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(peer.getAddress().getPort(),5, peer.getAddress().getAddress());
+
+            //NOT SURE TODO
+            this.serverSocket.setEnabledCipherSuites(this.serverSocket.getSupportedCipherSuites());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -21,11 +25,11 @@ public class ConnectionDispatcher implements Runnable {
     @Override
     public void run() {
         while (true) {
-            Socket socket = null;
+            SSLSocket socket = null;
             try {
                 System.out.println("Starting to accept connection");
                 System.out.println(serverSocket);
-                socket = this.serverSocket.accept();
+                socket = (SSLSocket) this.serverSocket.accept();
                 System.out.println("Accepted");
 
                 this.peer.getProtocolPool().execute(new MessageInterpreter(this.peer, socket));
