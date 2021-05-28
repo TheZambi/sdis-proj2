@@ -43,8 +43,10 @@ public class Backup implements Runnable {
 
         if (message == null) {
             Path filePath = Path.of(path);
+            long fileSize = 0;
             try {
-                if (!Files.exists(filePath) || Files.isDirectory(filePath) || Files.size(filePath) > 64000000000L) {
+                fileSize = Files.size(filePath);
+                if (!Files.exists(filePath) || Files.isDirectory(filePath) || fileSize > 64000000000L) {
                     // peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
                     System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
                     return;
@@ -58,7 +60,10 @@ public class Backup implements Runnable {
                     String.valueOf(this.peer.getId()),
                     String.valueOf(hash),
                     String.valueOf(replicationDegree),
-                    String.valueOf(currentReplicationDegree)
+                    String.valueOf(currentReplicationDegree),
+                    String.valueOf(fileSize),
+                    String.valueOf(this.peer.getAddress().getAddress().getHostAddress()),
+                    String.valueOf(this.peer.getAddress().getPort())
             };
 
             try {
@@ -67,8 +72,7 @@ public class Backup implements Runnable {
 
                 System.out.println(succID);
 
-                byte[] fileToSend = Files.readAllBytes(Path.of(this.path));
-                Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, fileToSend);
+                Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, null);
 
                 SSLSocket socket;
                 if (succID.getId() != this.peer.getId()) {
