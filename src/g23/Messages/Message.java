@@ -27,7 +27,9 @@ public class Message implements Serializable {
             this.fileSize = Long.parseLong(args[4]);
             this.address = args[5];
             this.port = Integer.parseInt(args[6]);
-
+        } else if (type == MessageType.GETFILE){
+            this.address = args[2];
+            this.port = Integer.parseInt(args[3]);
         } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = -1;

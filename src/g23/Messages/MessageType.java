@@ -9,6 +9,7 @@ public enum MessageType {
     REMOVED,
     DELETED,
     IWANT,
+    RESTOREFILE,
     FAIL,
     UNKNOWN
 }

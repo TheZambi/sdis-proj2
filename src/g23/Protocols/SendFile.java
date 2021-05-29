@@ -14,9 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class SendFile {
-    private Peer peer;
-    private Message message;
-    private SSLSocket socket;
+    private final Peer peer;
+    private final Message message;
+    private final SSLSocket socket;
 
     public SendFile(Peer peer, Message message, SSLSocket socket) {
         this.peer = peer;

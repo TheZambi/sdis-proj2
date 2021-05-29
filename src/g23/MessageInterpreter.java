@@ -2,14 +2,12 @@ package g23;
 
 import g23.Messages.Message;
 import g23.Protocols.ReceiveFile;
+import g23.Protocols.Restore.ReceiveRestoreFile;
+import g23.Protocols.Restore.SendRestoreFile;
 import g23.Protocols.SendFile;
 
 import javax.net.ssl.SSLSocket;
-import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.Socket;
-import java.util.Arrays;
 
 public class MessageInterpreter implements Runnable {
     private Peer peer;
@@ -31,6 +29,14 @@ public class MessageInterpreter implements Runnable {
                     break;
                 case IWANT:
                     (new SendFile(this.peer, msg, this.socket)).handleMessage();
+                    break;
+                    //we will receive a file we requested to restore
+                case RESTOREFILE:
+                    (new ReceiveRestoreFile(this.peer, msg, this.socket)).handleMessage();
+                    break;
+                    //Request to restore a file
+                case GETFILE:
+                    (new SendRestoreFile(this.peer, msg)).handleMessage();
                     break;
             }
         } catch (Exception e) {

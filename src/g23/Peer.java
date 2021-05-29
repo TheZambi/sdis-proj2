@@ -1,6 +1,7 @@
 package g23;
 
 import g23.Protocols.Backup;
+import g23.Protocols.Restore.Restore;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -34,6 +35,7 @@ public class Peer implements ChordNode {
     private ConcurrentMap<Long, FileInfo> storedFiles;
     private ConcurrentMap<Long, FileInfo> files; // FileHash -> FileInfo
     private Set<Long> filesToRestore;
+
     private ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
     private ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
     private ScheduledExecutorService stabilizer;
@@ -62,8 +64,7 @@ public class Peer implements ChordNode {
 
     }
 
-    public PeerInfo getSuccessor()
-    {
+    public PeerInfo getSuccessor() {
         return this.fingerTable.get(0);
     }
 
@@ -91,6 +92,7 @@ public class Peer implements ChordNode {
 
         this.files = new ConcurrentHashMap<>();
         this.storedFiles = new ConcurrentHashMap<>();
+        this.filesToRestore = new HashSet<>();
         this.bindRMI(this.info.getId());
 
         this.listenerThread.execute(new ConnectionDispatcher(this));
@@ -189,7 +191,7 @@ public class Peer implements ChordNode {
 
     @Override
     public void restore(String path) throws RemoteException {
-
+        this.protocolPool.execute(new Restore(this, path));
     }
 
     @Override
@@ -369,7 +371,7 @@ public class Peer implements ChordNode {
         return storedFiles;
     }
 
-    public long getRemainingSpace(){
+    public long getRemainingSpace() {
         return maxSpace - currentSpace;
     }
 
@@ -385,8 +387,12 @@ public class Peer implements ChordNode {
         return messagesToSend;
     }
 
-    public long getCurrentSpace(){
+    public long getCurrentSpace() {
         return currentSpace;
+    }
+
+    public Set<Long> getFilesToRestore() {
+        return filesToRestore;
     }
 
     public static long getFileId(String path, long peerID) {
