@@ -2,6 +2,7 @@ package g23;
 
 import g23.Protocols.Backup;
 import g23.Protocols.Reclaim;
+import g23.Protocols.Delete;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -195,7 +196,7 @@ public class Peer implements ChordNode {
 
     @Override
     public void delete(String path) throws RemoteException {
-
+        this.protocolPool.execute(new Delete(this, path));
     }
 
     @Override
@@ -378,6 +379,8 @@ public class Peer implements ChordNode {
         this.currentSpace += length;
     }
 
+    public void removeSpace(long space) { currentSpace -= space; }
+
     public ConcurrentMap<String, ScheduledFuture<?>> getBackupsToSend() {
         return backupsToSend;
     }
@@ -416,10 +419,5 @@ public class Peer implements ChordNode {
 
     public void setMaxSpace(long maxSpace) {
         this.maxSpace = maxSpace;
-    }
-
-    public long removeSpace(long space) {
-        currentSpace -= space;
-        return currentSpace;
     }
 }
