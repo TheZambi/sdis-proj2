@@ -6,6 +6,7 @@ import g23.Peer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.stream.Stream;
 
@@ -45,10 +46,10 @@ public class DeleteFile {
             try {
                 // will store if there is enough space in the peer
 
+                synchronized (this) {
+                    peer.removeSpace(Files.size(Paths.get("backup/" + key)));
+                }
 
-//                synchronized (this) {
-//                    peer.removeSpace(message.getBody().length);
-//                }
 
                 System.out.println("Deleted FILE " + key);
                 System.out.println("CURRENT REPLICATION: " + this.message.getCurrentReplicationDegree());
