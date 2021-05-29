@@ -2,8 +2,19 @@ package g23.Protocols;
 
 import g23.FileInfo;
 import g23.Messages.Message;
+import g23.Messages.MessageType;
 import g23.Peer;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
@@ -19,19 +30,16 @@ public class ReceiveFile {
     }
 
     public void handleMessage() throws RemoteException {
-        if(this.peer.findSuccessor(message.getFileId()).getId() == this.peer.getId())
-        {
-            if(message.isSeen())
-            {
+        if (this.peer.findSuccessor(message.getFileId()).getId() == this.peer.getId()) {
+            if (message.isSeen()) {
                 System.out.println("Found my message, stopping the propagation");
                 return;
             }
             message.seeMessage();
         }
         long key = message.getFileId();
-        System.out.println("RECEIVING File " + key);
 
-        //we are not yet storing this file
+        //we are not yet storing this file and we are not the owner of the file
         if (!peer.getStoredFiles().containsKey(key)) {
 
             // We are the ones requesting the backup
@@ -41,39 +49,60 @@ public class ReceiveFile {
                 return;
             }
 
-
             try {
                 // will store if there is enough space in the peer
-                boolean enough_space = false;
+                if (peer.getRemainingSpace() >= message.getFileSize()) {
 
-                synchronized (this) {
-                    if (peer.getRemainingSpace() >= message.getBody().length) {
-                        peer.addSpace(message.getBody().length);
-                        enough_space = true;
+                    System.out.println("RECEIVING File " + key);
+
+                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
+                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+
+                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+                    String[] msgArgs = {
+                            String.valueOf(this.peer.getId()),
+                            String.valueOf(message.getFileId())
+                    };
+                    Message fileRequest = new Message(MessageType.IWANT, msgArgs, null);
+                    oos.writeObject(fileRequest);
+
+                    ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
+
+                    Path newFile = Files.createFile(Path.of("backup/" + key));
+
+                    WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));
+
+                    ByteBuffer buffer = ByteBuffer.allocate(4096);
+
+                    while(fromInitiator.read(buffer) > 0 || buffer.position() > 0) {
+                        buffer.flip();
+                        toNewFile.write(buffer);
+                        buffer.compact();
                     }
-                }
 
-                if (enough_space) {
+                    toNewFile.close();
+                    fromInitiator.close();
+
+                    peer.addSpace(message.getFileSize());
+
                     System.out.println("STORED FILE " + key);
-                    System.out.println("CURRENT REPLICATION: " + this.message.getCurrentReplicationDegree());
-                    //Storing the received file
-                    try {
-                        Path newFile = Files.createFile(Path.of("backup/" + key));
-                        Files.write(newFile, message.getBody());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
 
                     // Add to out storedfiles map
-                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getCurrentReplicationDegree() , this.message.getReplicationDegree(), this.peer);
+                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getCurrentReplicationDegree(), this.message.getReplicationDegree(), this.peer);
                     this.peer.getStoredFiles().put(key, fi);
                     this.message.decrementCurrentReplication();
+                } else {
+                    System.out.println("NOT ENOUGH SPACE FOR FILE " + key);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            this.message.decrementCurrentReplication();
         }
         //If needed send the file to successor (decrements replication degree)
+        System.out.println("Current Replication Degree: " + message.getReplicationDegree());
         if (this.message.getCurrentReplicationDegree() > 0) {
             (new Backup(this.peer, this.message)).run();
         }

@@ -10,6 +10,9 @@ public class Message implements Serializable {
     private int replicationDegree;
     private int currentReplicationsDegree;
     private byte[] body;
+    private String address;
+    private int port;
+    private long fileSize;
     private boolean isSeen = false;
 
     public Message(MessageType type, String[] args, byte[] body) {
@@ -21,6 +24,9 @@ public class Message implements Serializable {
         if(type == MessageType.PUTFILE) {
             this.replicationDegree = Integer.parseInt(args[2]);
             this.currentReplicationsDegree = Integer.parseInt(args[3]);
+            this.fileSize = Long.parseLong(args[4]);
+            this.address = args[5];
+            this.port = Integer.parseInt(args[6]);
 
         } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;
@@ -100,4 +106,15 @@ public class Message implements Serializable {
         return replicationDegree;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public int getPort() {
+        return port;
+    }
 }
