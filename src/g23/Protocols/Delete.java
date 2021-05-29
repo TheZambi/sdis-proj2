@@ -10,11 +10,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -82,8 +78,7 @@ public class Delete implements Runnable {
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 System.out.println("Sending DELETE (propagation) to " + socket.getPort());
                 oos.writeObject(this.message);
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

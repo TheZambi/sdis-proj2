@@ -21,22 +21,22 @@ public class Message implements Serializable {
         this.fileId = Long.parseLong(args[1]);
         this.body = body;
 
-        if(type == MessageType.PUTFILE) {
+        if (type == MessageType.PUTFILE) {
             this.replicationDegree = Integer.parseInt(args[2]);
             this.currentReplicationsDegree = Integer.parseInt(args[3]);
             this.fileSize = Long.parseLong(args[4]);
             this.address = args[5];
             this.port = Integer.parseInt(args[6]);
-        } else if (type == MessageType.GETFILE){
+        } else if (type == MessageType.GETFILE) {
             this.address = args[2];
             this.port = Integer.parseInt(args[3]);
-        } else if(type == MessageType.REMOVED) {
+        } else if (type == MessageType.REMOVED) {
             this.replicationDegree = Integer.parseInt(args[2]);
             this.currentReplicationsDegree = Integer.parseInt(args[3]);
-        } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
+        } else if (type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = -1;
-        } else if (type == MessageType.DELETE){
+        } else if (type == MessageType.DELETE) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = Integer.parseInt(args[2]);
         }
@@ -46,7 +46,7 @@ public class Message implements Serializable {
         return this.isSeen;
     }
 
-    public void seeMessage(){
+    public void seeMessage() {
         this.isSeen = true;
     }
 
@@ -57,39 +57,6 @@ public class Message implements Serializable {
     public void decrementCurrentReplication() {
         this.currentReplicationsDegree--;
     }
-
-//    public byte[] toByteArray() {
-//        String header =
-//                " " +
-//                this.type.name() +
-//                " " +
-//                this.senderId + //PeerId
-//                " " +
-//                this.fileId + //FileId
-//                " ";
-//
-//        if (this.chunkNumber != -1) {
-//            header += this.chunkNumber + " ";
-//        }
-//        if (this.replicationDegree != -1) {
-//            header += this.replicationDegree + " ";
-//        }
-//
-//        if(this.type == MessageType.GETFILE && this.port != -1) {
-//            header += "\r\n " + this.port;
-//        }
-//
-//        header += " \r\n\r\n";
-//
-//        if (this.body != null) {
-//            byte[] toSend = new byte[header.length() + this.body.length];
-//            System.arraycopy(header.getBytes(), 0, toSend, 0, header.length());
-//            System.arraycopy(this.body, 0, toSend, header.length(), this.body.length);
-//            return toSend;
-//        }
-//        return header.getBytes();
-//
-//    }
 
     public byte[] getBody() {
         return body;

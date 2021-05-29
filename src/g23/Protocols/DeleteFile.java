@@ -20,10 +20,8 @@ public class DeleteFile {
     }
 
     public void handleMessage() throws RemoteException {
-        if(this.peer.findSuccessor(message.getFileId()).getId() == this.peer.getId())
-        {
-            if(message.isSeen())
-            {
+        if (this.peer.findSuccessor(message.getFileId()).getId() == this.peer.getId()) {
+            if (message.isSeen()) {
                 System.out.println("Found my message, stopping the propagation");
                 return;
             }

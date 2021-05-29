@@ -26,13 +26,13 @@ public class ReceiveRemoved {
             e.printStackTrace();
         }
 
-        if(this.peer.getFiles().containsKey(message.getFileId())) { //peer is owner of the file
+        if (this.peer.getFiles().containsKey(message.getFileId())) { //peer is owner of the file
             System.out.println("RECEIVED REMOVED " + message.getFileId() + ". I AM OWNER");
 
             String filePath = this.peer.getFiles().get(message.getFileId()).getPath();
             (new Backup(this.peer, filePath, message.getReplicationDegree(), message.getCurrentReplicationDegree())).run();
 
-        } else if(this.peer.getStoredFiles().containsKey(message.getFileId())) { //peer has a backup of this file
+        } else if (this.peer.getStoredFiles().containsKey(message.getFileId())) { //peer has a backup of this file
 
             System.out.println("RECEIVED REMOVED " + message.getFileId() + ". I HAVE A BACKUP");
             (new Backup(this.peer, message.getFileId(), message.getReplicationDegree(), message.getCurrentReplicationDegree())).run();

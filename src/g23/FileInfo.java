@@ -1,8 +1,6 @@
 package g23;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FileInfo implements Serializable, Comparable<FileInfo> {
 
@@ -12,7 +10,7 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
     private ChordNode peerInfo;
     private long size;
 
-    public FileInfo(String path, long hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
+    public FileInfo(String path, long hash, int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
         this.path = path;
         this.hash = hash;
         this.desiredReplicationDegree = desiredReplicationDegree;
@@ -20,7 +18,7 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
         this.size = -1;
     }
 
-    public FileInfo(String path, long hash,int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo, long size) {
+    public FileInfo(String path, long hash, int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo, long size) {
         this(path, hash, currentReplicationDegree, desiredReplicationDegree, peerInfo);
         this.size = size;
     }
@@ -42,7 +40,6 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
     }
 
 
-
 //    public int getChunkAmount() {
 //        return chunksPeers.size();
 //    }
@@ -51,7 +48,9 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
         return peerInfo;
     }
 
-    public void setPeerInfo(ChordNode peerInfo) { this.peerInfo = peerInfo; }
+    public void setPeerInfo(ChordNode peerInfo) {
+        this.peerInfo = peerInfo;
+    }
 
     @Override
     public int compareTo(FileInfo o) {

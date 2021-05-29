@@ -4,8 +4,6 @@ import g23.*;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;

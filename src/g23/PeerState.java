@@ -28,7 +28,7 @@ public class PeerState implements Serializable {
     public String toString() {
         String result = "";
         result += "-------------INITIATED BACKUPS-------------\n";
-        for (Map.Entry<String, FileInfo> entry : files.entrySet()){
+        for (Map.Entry<String, FileInfo> entry : files.entrySet()) {
             result += "\t-------------FILE---------------\n";
             result += "Name: " + entry.getValue().getPath() + "\n";
             result += "File ID: " + entry.getKey() + "\n";
@@ -36,7 +36,7 @@ public class PeerState implements Serializable {
         }
 
         result += "---------------STORED FILES---------------\n";
-        for (Map.Entry<String, FileInfo> entry : storedfiles.entrySet()){
+        for (Map.Entry<String, FileInfo> entry : storedfiles.entrySet()) {
             result += "-------------Chunk---------------\n";
             result += "File ID: " + entry.getValue().getHash() + "\n";
             result += "Size: " + entry.getValue().getSize() / 1000 + "KB\n";

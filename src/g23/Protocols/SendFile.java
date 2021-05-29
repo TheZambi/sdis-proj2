@@ -26,16 +26,16 @@ public class SendFile {
     public void handleMessage() {
         Path filePath;
 
-        if(this.peer.getFiles().containsKey(message.getFileId())) { //peer is owner of file
+        if (this.peer.getFiles().containsKey(message.getFileId())) { //peer is owner of file
             filePath = Path.of(this.peer.getFiles().get(message.getFileId()).getPath());
 
-        } else if(this.peer.getStoredFiles().containsKey(message.getFileId())) { //peer has a backup of file
+        } else if (this.peer.getStoredFiles().containsKey(message.getFileId())) { //peer has a backup of file
             filePath = Path.of("backup/" + message.getFileId());
 
         } else
             return;
 
-        if(!Files.exists(filePath))
+        if (!Files.exists(filePath))
             return;
 
         try {
@@ -43,7 +43,7 @@ public class SendFile {
             ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(filePath));
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-            while(fromFile.read(buffer) > 0 || buffer.position() > 0) {
+            while (fromFile.read(buffer) > 0 || buffer.position() > 0) {
                 buffer.flip();
                 toPeer.write(buffer);
                 buffer.compact();
@@ -52,7 +52,7 @@ public class SendFile {
             toPeer.close();
             fromFile.close();
 
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

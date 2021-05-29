@@ -26,17 +26,17 @@ public class MessageInterpreter implements Runnable {
             Message msg = (Message) ois.readObject();
 
             switch (msg.getType()) {
-                case PUTFILE :
+                case PUTFILE:
                     (new ReceiveFile(this.peer, msg)).handleMessage();
                     break;
                 case IWANT:
                     (new SendFile(this.peer, msg, this.socket)).handleMessage();
                     break;
-                    //we will receive a file we requested to restore
+                //we will receive a file we requested to restore
                 case RESTOREFILE:
                     (new ReceiveRestoreFile(this.peer, msg, this.socket)).handleMessage();
                     break;
-                    //Request to restore a file
+                //Request to restore a file
                 case GETFILE:
                     (new SendRestoreFile(this.peer, msg)).handleMessage();
                     break;

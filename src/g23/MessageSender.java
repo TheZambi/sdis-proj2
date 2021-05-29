@@ -7,7 +7,6 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
 
 public class MessageSender implements Runnable {
 

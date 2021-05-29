@@ -12,11 +12,11 @@ public class PeerInfo implements Serializable {
         this.id = id;
     }
 
-    public InetSocketAddress getAddress(){
+    public InetSocketAddress getAddress() {
         return this.address;
     }
 
-    public long getId(){
+    public long getId() {
         return this.id;
     }
 

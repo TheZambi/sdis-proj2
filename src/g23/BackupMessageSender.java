@@ -1,6 +1,7 @@
 package g23;
 
 import g23.Messages.Message;
+
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.ObjectOutputStream;
@@ -9,6 +10,7 @@ import java.io.ObjectOutputStream;
 public class BackupMessageSender implements Runnable {
     private Peer peer;
     private Message message;
+
     public BackupMessageSender(Peer peer, Message message) {
         this.peer = peer;
         this.message = message;

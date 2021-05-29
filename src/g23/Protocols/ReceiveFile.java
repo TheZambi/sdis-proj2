@@ -72,7 +72,7 @@ public class ReceiveFile {
 
                     ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-                    while(fromInitiator.read(buffer) > 0 || buffer.position() > 0) {
+                    while (fromInitiator.read(buffer) > 0 || buffer.position() > 0) {
                         buffer.flip();
                         toNewFile.write(buffer);
                         buffer.compact();

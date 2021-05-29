@@ -17,39 +17,41 @@ import java.util.concurrent.*;
 
 public class Peer implements ChordNode {
 
-    //    private static final int m = 256;
+    //Chord can hold 2^m nodes
+    //Chord related fields
+    // private static final int m = 256;
     private static final int m = 5;
+
+    //Time intervals for stabilization methods
     private static final int STABILIZER_INTERVAL = 5;
     private static final int SUCCESSORS_FINDER_INTERVAL = 5;
     private static final int FINGER_FIXER_INTERVAL = 500;
     private static final int PREDECESSOR_CHECKER_INTERVAL = 5;
 
-    private final PeerInfo info;
+    //Chord related services (used to stabilize the network)
+    private ScheduledExecutorService stabilizer;
+    private ScheduledExecutorService successorFinder;
+    private ScheduledExecutorService fingerFixer;
+    private ScheduledExecutorService predecessorChecker;
+    private ScheduledExecutorService protocolPool;
 
+    // Chord related information stored by each node
     private List<PeerInfo> fingerTable;
-    private HashMap<String, String> data; //TODO
-
     private PeerInfo predecessor;
     private ArrayList<PeerInfo> successors;
-
     private int next; //Used for fix_fingers method
 
-    private ConnectionDispatcher connectionDispatcher;
+    private final PeerInfo info;
 
+    //Protocol related data structures
     private ConcurrentMap<Long, FileInfo> storedFiles;
     private ConcurrentMap<Long, FileInfo> files; // FileHash -> FileInfo
     private Set<Long> filesToRestore;
 
-    private ConcurrentMap<String, ScheduledFuture<?>> messagesToSend;
-    private ConcurrentMap<String, ScheduledFuture<?>> backupsToSend; //FOR THE RECLAIM PROTOCOL
-    private ScheduledExecutorService stabilizer;
-    private ScheduledExecutorService successorFinder;
-
-    private ScheduledExecutorService fingerFixer;
-    private ScheduledExecutorService predecessorChecker;
-    private ScheduledExecutorService protocolPool;
+    //Thread that listens to TCP messages from other peers
     private ExecutorService listenerThread;
 
+    //Peer storage
     long maxSpace = 100000000000L; // bytes
     long currentSpace = 0; // bytes
 
@@ -66,7 +68,6 @@ public class Peer implements ChordNode {
             InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
             peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
         }
-
     }
 
     public Peer(InetSocketAddress address) throws IOException {
@@ -75,7 +76,6 @@ public class Peer implements ChordNode {
         this.next = 0;
 
         this.fingerTable = new ArrayList<>();
-
 
         for (int i = 0; i < m; i++)
             fingerTable.add(null);
@@ -188,8 +188,7 @@ public class Peer implements ChordNode {
         return this.predecessor;
     }
 
-    public PeerInfo getSuccessor()
-    {
+    public PeerInfo getSuccessor() {
         return this.fingerTable.get(0);
     }
 
@@ -266,7 +265,7 @@ public class Peer implements ChordNode {
 //        printInfo();
     }
 
-    public void successorsFinder(){
+    public void successorsFinder() {
         PeerInfo ni = null;
         try {
             Registry registry = LocateRegistry.getRegistry();
@@ -279,8 +278,8 @@ public class Peer implements ChordNode {
 
         PeerInfo ns = null;
         try {
-            if(ni != null)
-                if(ni.getId() != this.getId()) {
+            if (ni != null)
+                if (ni.getId() != this.getId()) {
                     Registry registry = LocateRegistry.getRegistry();
                     ChordNode stub = (ChordNode) registry.lookup(String.valueOf(ni.getId()));
                     ns = stub.getSuccessor();
@@ -291,11 +290,11 @@ public class Peer implements ChordNode {
 
         this.getSuccessors().clear();
         this.getSuccessors().add(fingerTable.get(0));
-        if(ni != null)
-            if(ni.getId() != this.getId() && !this.getSuccessors().contains(ni))
+        if (ni != null)
+            if (ni.getId() != this.getId() && !this.getSuccessors().contains(ni))
                 this.getSuccessors().add(ni);
-        if(ns != null)
-            if(ns.getId() != this.getId() && !this.getSuccessors().contains(ns))
+        if (ns != null)
+            if (ns.getId() != this.getId() && !this.getSuccessors().contains(ns))
                 this.getSuccessors().add(ns);
 
         System.out.println(this.getSuccessors().toString());
@@ -431,14 +430,8 @@ public class Peer implements ChordNode {
         this.currentSpace += length;
     }
 
-    public void removeSpace(long space) { currentSpace -= space; }
-
-    public ConcurrentMap<String, ScheduledFuture<?>> getBackupsToSend() {
-        return backupsToSend;
-    }
-
-    public ConcurrentMap<String, ScheduledFuture<?>> getMessagesToSend() {
-        return messagesToSend;
+    public void removeSpace(long space) {
+        currentSpace -= space;
     }
 
     public long getCurrentSpace() {

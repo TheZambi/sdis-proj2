@@ -13,7 +13,7 @@ public class ConnectionDispatcher implements Runnable {
     public ConnectionDispatcher(Peer peer) {
         this.peer = peer;
         try {
-            this.serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(peer.getAddress().getPort(),5, peer.getAddress().getAddress());
+            this.serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(peer.getAddress().getPort(), 5, peer.getAddress().getAddress());
 
             //NOT SURE TODO
             this.serverSocket.setEnabledCipherSuites(this.serverSocket.getSupportedCipherSuites());
