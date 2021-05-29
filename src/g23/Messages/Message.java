@@ -21,12 +21,16 @@ public class Message implements Serializable {
         this.fileId = Long.parseLong(args[1]);
         this.body = body;
 
-        if(type == MessageType.PUTFILE || type == MessageType.REMOVED) {
+        if(type == MessageType.PUTFILE) {
             this.replicationDegree = Integer.parseInt(args[2]);
             this.currentReplicationsDegree = Integer.parseInt(args[3]);
             this.fileSize = Long.parseLong(args[4]);
             this.address = args[5];
             this.port = Integer.parseInt(args[6]);
+
+        } else if(type == MessageType.REMOVED) {
+            this.replicationDegree = Integer.parseInt(args[2]);
+            this.currentReplicationsDegree = Integer.parseInt(args[3]);
 
         } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;

@@ -1,11 +1,8 @@
 package g23.Protocols;
 
-import g23.FileInfo;
-import g23.MessageSender;
+import g23.*;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
-import g23.Peer;
-import g23.PeerInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,21 +39,23 @@ public class Reclaim implements Runnable {
                 String.valueOf(this.peer.getId()),
                 String.valueOf(fileInfo.getHash()),
                 String.valueOf(fileInfo.getDesiredReplicationDegree()),
-                String.valueOf(1)
+                "1"
         };
+
+        System.out.println(msgArgs);
 
         Message msgToSend = new Message(MessageType.REMOVED, msgArgs, null);
 
         try {
-            File fileToRemove = new File("backup/" + stringFileInfoEntry.getKey());
+            System.out.println("DELETING FILE");
+            Files.delete(Path.of("backup/" + stringFileInfoEntry.getKey()));
 
-            if (fileToRemove.delete()) {
-                System.out.println("SENDING REMOVED " + stringFileInfoEntry.getValue().getHash());
-                peer.removeSpace(fileInfo.getSize());
-                peer.getStoredFiles().remove(stringFileInfoEntry.getKey());
+            System.out.println("DELETED FILE " + stringFileInfoEntry.getKey());
+            peer.removeSpace(fileInfo.getSize());
+            peer.getStoredFiles().remove(stringFileInfoEntry.getKey());
 
-                this.peer.getProtocolPool().execute(new MessageSender(msgToSend, this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort()));
-            }
+            (new BackupMessageSender(this.peer, msgToSend)).run();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

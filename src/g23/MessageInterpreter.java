@@ -34,7 +34,7 @@ public class MessageInterpreter implements Runnable {
                     (new SendFile(this.peer, msg, this.socket)).handleMessage();
                     break;
                 case REMOVED:
-                    new ReceiveRemoved(this.peer, msg).handleMessage();
+                    (new ReceiveRemoved(this.peer, msg)).handleMessage();
                     break;
             }
         } catch (Exception e) {
