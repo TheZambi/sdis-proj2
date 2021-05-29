@@ -12,6 +12,7 @@ public interface ChordNode extends Remote {
     boolean isAlive() throws RemoteException;
 
     PeerInfo getPredecessor() throws RemoteException;
+    PeerInfo getSuccessor() throws RemoteException;
 
     void backup(String path, int replicationDegree) throws RemoteException;
     void restore(String path) throws RemoteException;
