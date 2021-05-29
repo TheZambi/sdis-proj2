@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileInfo implements Serializable {
+public class FileInfo implements Serializable, Comparable<FileInfo> {
 
     private final String path;
     private final long hash;
@@ -52,6 +52,15 @@ public class FileInfo implements Serializable {
     }
 
     public void setPeerInfo(ChordNode peerInfo) { this.peerInfo = peerInfo; }
+
+    @Override
+    public int compareTo(FileInfo o) {
+        try {
+            return Math.toIntExact(this.size - o.getSize());
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
 
 //    public boolean allSent() {
 //        for(Chunk chunk : chunksPeers) {

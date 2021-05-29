@@ -1,6 +1,5 @@
 package g23.Protocols;
 
-import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Peer;
 
@@ -25,16 +24,23 @@ public class SendFile {
     }
 
     public void handleMessage() {
-        if(!this.peer.getFiles().containsKey(message.getFileId()))
+        Path filePath;
+
+        if(this.peer.getFiles().containsKey(message.getFileId())) { //peer is owner of file
+            filePath = Path.of(this.peer.getFiles().get(message.getFileId()).getPath());
+
+        } else if(this.peer.getStoredFiles().containsKey(message.getFileId())) { //peer has a backup of file
+            filePath = Path.of("backup/" + message.getFileId());
+
+        } else
             return;
 
-        FileInfo fileInfo = this.peer.getFiles().get(message.getFileId());
-        if(!Files.exists(Path.of(fileInfo.getPath())))
+        if(!Files.exists(filePath))
             return;
 
         try {
             WritableByteChannel toPeer = Channels.newChannel(socket.getOutputStream());
-            ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(Path.of(fileInfo.getPath())));
+            ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(filePath));
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
             while(fromFile.read(buffer) > 0 || buffer.position() > 0) {

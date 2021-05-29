@@ -1,5 +1,6 @@
 package g23.Protocols;
 
+import g23.BackupMessageSender;
 import g23.FileInfo;
 import g23.Messages.*;
 import g23.Peer;
@@ -19,6 +20,7 @@ public class Backup implements Runnable {
     private final int replicationDegree;
     private final int currentReplicationDegree;
     private final Message message;
+    private long hash;
 
 
     public Backup(Peer peer, String path, int replicationDegree, int currentReplicationDegree) {
@@ -27,6 +29,16 @@ public class Backup implements Runnable {
         this.replicationDegree = replicationDegree;
         this.currentReplicationDegree = currentReplicationDegree;
         this.message = null;
+        this.hash = -1;
+    }
+
+    public Backup(Peer peer, long hash, int replicationDegree, int currentReplicationDegree) {
+        this.peer = peer;
+        this.hash = hash;
+        this.replicationDegree = replicationDegree;
+        this.currentReplicationDegree = currentReplicationDegree;
+        this.message = null;
+        this.path = null;
     }
 
     public Backup(Peer peer, Message message) {
@@ -35,26 +47,45 @@ public class Backup implements Runnable {
         this.message = message;
         this.replicationDegree = message.getReplicationDegree();
         this.currentReplicationDegree = message.getCurrentReplicationDegree();
+        this.hash = -1;
     }
 
     @Override
     public void run() {
 
         if (message == null) {
-            Path filePath = Path.of(path);
+
             long fileSize = 0;
-            try {
-                fileSize = Files.size(filePath);
-                if (!Files.exists(filePath) || Files.isDirectory(filePath) || fileSize > 64000000000L) {
-                    // peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
-                    System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
+            Path filePath;
+
+            if (path == null) { //peer has a backup of the file
+                if (!this.peer.getStoredFiles().containsKey(hash))
                     return;
+                filePath = Path.of("backup/" + hash);
+                try {
+                    fileSize = Files.size(filePath);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+
+            } else { // peer is OWNER of the file
+                filePath = Path.of(path);
+
+                try {
+                    fileSize = Files.size(filePath);
+                    if (!Files.exists(filePath) || Files.isDirectory(filePath) || fileSize > 64000000000L) {
+                        // peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
+                        System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
+                        return;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
-            long hash = Peer.getFileId(path, peer.getId());
+            if (hash == -1) //OWNER
+                hash = Peer.getFileId(path, peer.getId());
+
             String[] msgArgs = {
                     String.valueOf(this.peer.getId()),
                     String.valueOf(hash),
@@ -65,34 +96,13 @@ public class Backup implements Runnable {
                     String.valueOf(this.peer.getAddress().getPort())
             };
 
-            try {
-                long fileId = Peer.getFileId(this.path, this.peer.getId());
-                PeerInfo succID = this.peer.findSuccessor(fileId);
+            Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, null);
 
-                System.out.println(succID);
+            (new BackupMessageSender(this.peer, msgToSend)).run();
 
-                Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, null);
-
-                SSLSocket socket;
-                if (succID.getId() != this.peer.getId()) {
-                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
-                } else {
-                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
-                }
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
-
-                System.out.println(socket);
-                System.out.println("Sending BACKUP to " + socket.getPort());
-                System.out.println(msgToSend.getCurrentReplicationDegree());
-                System.out.println("Created socket");
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.writeObject(msgToSend);
-                System.out.println("Finished Writing");
-
+            if (path != null) //OWNER
                 this.peer.getFiles().put(hash, new FileInfo(path, hash, currentReplicationDegree, replicationDegree, peer));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
         } else {
             //Backup to successor until replication degree is reached
             try {
@@ -107,22 +117,5 @@ public class Backup implements Runnable {
                 e.printStackTrace();
             }
         }
-
-//        byte[] data;
-//        int nRead = -1;
-//        int nChunk = 0;
-//        try (FileInputStream file = new FileInputStream(path)) {
-
-        // read chunks
-
-//            FileInfo fileInfo = new FileInfo(path, hash, replicationDegree, nChunk);
-//            if(this.peer.getFiles().containsKey(hash)) {
-//                fileInfo.setChunksPeers(this.peer.getFiles().get(hash).getChunksPeers());
-//            }
-//            this.peer.getFiles().put(hash, fileInfo);
-
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
     }
 }

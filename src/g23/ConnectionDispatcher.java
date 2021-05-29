@@ -8,7 +8,7 @@ import java.io.IOException;
 public class ConnectionDispatcher implements Runnable {
 
     private SSLServerSocket serverSocket;
-    private Peer peer;
+    private final Peer peer;
 
     public ConnectionDispatcher(Peer peer) {
         this.peer = peer;
@@ -25,7 +25,7 @@ public class ConnectionDispatcher implements Runnable {
     @Override
     public void run() {
         while (true) {
-            SSLSocket socket = null;
+            SSLSocket socket;
             try {
                 System.out.println("Starting to accept connection");
                 System.out.println(serverSocket);

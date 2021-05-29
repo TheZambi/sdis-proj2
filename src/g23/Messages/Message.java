@@ -30,9 +30,15 @@ public class Message implements Serializable {
         } else if (type == MessageType.GETFILE){
             this.address = args[2];
             this.port = Integer.parseInt(args[3]);
+        } else if(type == MessageType.REMOVED) {
+            this.replicationDegree = Integer.parseInt(args[2]);
+            this.currentReplicationsDegree = Integer.parseInt(args[3]);
         } else if(type != MessageType.DELETE && type != MessageType.DELETED) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = -1;
+        } else if (type == MessageType.DELETE){
+            this.replicationDegree = -1;
+            this.currentReplicationsDegree = Integer.parseInt(args[2]);
         }
     }
 
