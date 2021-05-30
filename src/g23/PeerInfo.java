@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.net.InetSocketAddress;
 
 public class PeerInfo implements Serializable {
-    private InetSocketAddress address;
-    private long id;
+    private final InetSocketAddress address;
+    private final long id;
 
     public PeerInfo(InetSocketAddress address, long id) {
         this.address = address;
@@ -26,5 +26,16 @@ public class PeerInfo implements Serializable {
                 "address=" + address.getAddress() + ":" + address.getPort() +
                 ", id=" + id +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+
+        if(!(obj instanceof PeerInfo))
+            return false;
+
+        return this.address.equals(((PeerInfo)obj).getAddress()) && this.id == ((PeerInfo)obj).getId();
     }
 }
