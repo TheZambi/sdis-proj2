@@ -1,8 +1,9 @@
-package g23.Protocols;
+package g23.Protocols.Delete;
 
 import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Peer;
+import g23.Protocols.Delete.Delete;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

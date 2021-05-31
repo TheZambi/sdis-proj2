@@ -1,4 +1,4 @@
-package g23.Protocols;
+package g23.Protocols.Delete;
 
 import g23.FileInfo;
 import g23.Messages.Message;
@@ -49,12 +49,32 @@ public class Delete implements Runnable {
                     long fileId = Peer.getFileId(this.path, this.peer.getId());
                     PeerInfo succID = this.peer.findSuccessor(fileId);
 
-                    SSLSocket socket;
+                    SSLSocket socket = null;
+
                     if (succID.getId() != this.peer.getId()) {
                         socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
                     } else {
-                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+
+                        for(int i=0; i<this.peer.getSuccessors().size();i++) {
+                            try {
+                                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+
+                                break;
+                            } catch(IOException e)
+                            {
+                                if(i == 0)
+                                    this.peer.getFingerTable().set(0,this.peer.getPeerInfo());
+                                if(i == this.peer.getSuccessors().size() - 1)
+                                {
+                                    System.out.println("Couldn't connect with any successor to send DELETE.");
+                                    return;
+                                }
+                            }
+                        }
                     }
+                    if(socket == null)
+                        return;
+
                     socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
                     this.peer.getFiles().remove(match.getKey());
@@ -70,16 +90,25 @@ public class Delete implements Runnable {
 
             });
         } else {
-            try {
-                PeerInfo successor = peer.getSuccessor();
-                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+            for(int i=0; i<this.peer.getSuccessors().size();i++) {
+                try {
+                    PeerInfo successor = peer.getSuccessors().get(i);
+                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                System.out.println("Sending DELETE (propagation) to " + socket.getPort());
-                oos.writeObject(this.message);
-            } catch (Exception e) {
-                e.printStackTrace();
+                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                    System.out.println("Sending DELETE (propagation) to " + socket.getPort());
+                    oos.writeObject(this.message);
+                    break;
+                } catch (Exception e) {
+                    if(i == 0)
+                        this.peer.getFingerTable().set(0,this.peer.getPeerInfo());
+                    if(i == this.peer.getSuccessors().size() - 1)
+                    {
+                        System.out.println("Couldn't connect with any successor to send DELETE.");
+                        return;
+                    }
+                }
             }
         }
 

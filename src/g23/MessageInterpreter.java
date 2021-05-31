@@ -1,12 +1,12 @@
 package g23;
 
 import g23.Messages.Message;
-import g23.Protocols.DeleteFile;
-import g23.Protocols.ReceiveFile;
+import g23.Protocols.Delete.DeleteFile;
+import g23.Protocols.Backup.ReceiveFile;
 import g23.Protocols.Restore.ReceiveRestoreFile;
 import g23.Protocols.Restore.SendRestoreFile;
-import g23.Protocols.ReceiveRemoved;
-import g23.Protocols.SendFile;
+import g23.Protocols.Reclaim.ReceiveRemoved;
+import g23.Protocols.Backup.SendFile;
 
 import javax.net.ssl.SSLSocket;
 import java.io.ObjectInputStream;

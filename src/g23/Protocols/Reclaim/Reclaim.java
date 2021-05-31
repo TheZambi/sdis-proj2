@@ -1,8 +1,9 @@
-package g23.Protocols;
+package g23.Protocols.Reclaim;
 
 import g23.*;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
+import g23.Protocols.Backup.BackupMessageSender;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

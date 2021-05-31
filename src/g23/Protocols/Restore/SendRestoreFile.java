@@ -40,17 +40,27 @@ public class SendRestoreFile {
         System.out.println(fileInfo);
         if (fileInfo == null || !Files.exists(Path.of("backup/" + fileInfo.getHash()))) {
             //File does not exist so we forward the request
-            try {
-                PeerInfo successor = peer.getSuccessor();
-                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+            for(int i=0; i<peer.getSuccessors().size(); i++){
+                try {
+                    PeerInfo successor = peer.getSuccessors().get(i);
+                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                System.out.println("Sending Restore (propagation) to " + socket.getPort());
-                oos.writeObject(this.message);
-            } catch (IOException e) {
-                e.printStackTrace();
+                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                    System.out.println("Sending Restore (propagation) to " + socket.getPort());
+                    oos.writeObject(this.message);
+                    break;
+                } catch (IOException e) {
+                    if (i == 0) {
+                        this.peer.getFingerTable().set(0, this.peer.getPeerInfo());
+                    }
+                    if (i == this.peer.getSuccessors().size() - 1) {
+                        System.out.println("Couldn't connect with any successor to send DELETE.");
+                        return;
+                    }
+                }
             }
+
         } else {
             System.out.println("FOUND FILE TO BACKUP");
             try {

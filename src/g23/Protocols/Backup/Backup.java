@@ -1,6 +1,5 @@
-package g23.Protocols;
+package g23.Protocols.Backup;
 
-import g23.BackupMessageSender;
 import g23.FileInfo;
 import g23.Messages.*;
 import g23.Peer;
@@ -101,20 +100,29 @@ public class Backup implements Runnable {
             (new BackupMessageSender(this.peer, msgToSend)).run();
 
             if (path != null) //OWNER
-                this.peer.getFiles().put(hash, new FileInfo(path, hash, currentReplicationDegree, replicationDegree, peer));
+                this.peer.getFiles().put(hash, new FileInfo(path, hash, replicationDegree, peer.getPeerInfo()));
 
         } else {
             //Backup to successor until replication degree is reached
-            try {
-                PeerInfo successor = peer.getSuccessor();
-                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+            for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
+                try {
+                    PeerInfo successor = this.peer.getSuccessors().get(i);
+                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
+                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                System.out.println("Sending BACKUP (propagation) to " + socket.getPort());
-                oos.writeObject(this.message);
-            } catch (IOException e) {
-                e.printStackTrace();
+                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                    System.out.println("Sending BACKUP (propagation) to " + socket.getPort());
+                    oos.writeObject(this.message);
+
+                    //Managed to propagate to a successor.
+                    break;
+                } catch (IOException e) {
+                    if (i == 0)
+                        this.peer.getFingerTable().set(0, this.peer.getPeerInfo());
+                    if (i == this.peer.getSuccessors().size() - 1)
+                        System.out.println("Couldn't find an active successor, stopping BACKUP propagation");
+//                    e.printStackTrace();
+                }
             }
         }
     }

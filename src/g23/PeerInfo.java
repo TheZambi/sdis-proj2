@@ -30,12 +30,12 @@ public class PeerInfo implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if(this == obj)
+        if (this == obj)
             return true;
 
-        if(!(obj instanceof PeerInfo))
+        if (!(obj instanceof PeerInfo))
             return false;
 
-        return this.address.equals(((PeerInfo)obj).getAddress()) && this.id == ((PeerInfo)obj).getId();
+        return this.address.equals(((PeerInfo) obj).getAddress()) && this.id == ((PeerInfo) obj).getId();
     }
 }

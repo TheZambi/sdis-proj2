@@ -7,10 +7,10 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
     private final String path;
     private final long hash;
     private final int desiredReplicationDegree;
-    private ChordNode peerInfo;
+    private transient PeerInfo peerInfo;
     private long size;
 
-    public FileInfo(String path, long hash, int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo) {
+    public FileInfo(String path, long hash, int desiredReplicationDegree, PeerInfo peerInfo) {
         this.path = path;
         this.hash = hash;
         this.desiredReplicationDegree = desiredReplicationDegree;
@@ -18,8 +18,8 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
         this.size = -1;
     }
 
-    public FileInfo(String path, long hash, int currentReplicationDegree, int desiredReplicationDegree, ChordNode peerInfo, long size) {
-        this(path, hash, currentReplicationDegree, desiredReplicationDegree, peerInfo);
+    public FileInfo(String path, long hash, int desiredReplicationDegree, PeerInfo peerInfo, long size) {
+        this(path, hash, desiredReplicationDegree, peerInfo);
         this.size = size;
     }
 
@@ -44,11 +44,11 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
 //        return chunksPeers.size();
 //    }
 
-    public ChordNode getPeerInfo() {
+    public PeerInfo getPeerInfo() {
         return peerInfo;
     }
 
-    public void setPeerInfo(ChordNode peerInfo) {
+    public void setPeerInfo(PeerInfo peerInfo) {
         this.peerInfo = peerInfo;
     }
 

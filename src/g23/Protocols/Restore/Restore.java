@@ -6,6 +6,7 @@ import g23.Messages.MessageType;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -42,13 +43,33 @@ public class Restore implements Runnable {
             };
             Message msgToSend = new Message(MessageType.GETFILE, msgArgs, null);
 
-            SSLSocket socket;
+            SSLSocket socket = null;
             if (succID.getId() != this.peer.getId()) {
                 socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
             } else {
-                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+
+                for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
+                    try {
+                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+                        socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                        break;
+                    } catch (IOException e) {
+                        if (i == 0) {
+                            this.peer.getFingerTable().set(0, this.peer.getPeerInfo());
+                        }
+                        if (i == this.peer.getSuccessors().size() - 1) {
+                            System.out.println("Couldn't connect with any successor to send DELETE.");
+                            return;
+                        }
+                    }
+                }
+
             }
-            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+
+            if (socket == null) {
+                return;
+            }
 
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(msgToSend);

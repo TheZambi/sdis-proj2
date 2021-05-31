@@ -13,15 +13,16 @@ argc=$#
 
 if (( argc < 2 ))
 then
-	echo "Usage: $0 <folder_to_run> <address>:<port> [<address_to_connect>:<port_to_connect>]"
+	echo "Usage: $0 <folder_to_run> <rmi_host> <address>:<port> [<address_to_connect>:<port_to_connect>]"
 	exit 1
 fi
 
 # Assign input arguments to nicely named variables
 
 id=$1
-op_address=$2
-join_address=$3
+rmi_host=$2
+op_address=$3
+join_address=$4
 
 # Execute the program
 # Should not need to change anything but the class and its package, unless you use any jar file
@@ -33,5 +34,5 @@ cd test/"${id}" && java -classpath ../.. \
   -Djavax.net.ssl.keyStorePassword=123456 \
   -Djavax.net.ssl.trustStore=../../../../keys/truststore \
   -Djavax.net.ssl.trustStorePassword=123456 \
-  g23.Peer ${op_address} ${join_address}
+  g23.Peer ${rmi_host} ${op_address} ${join_address}
 

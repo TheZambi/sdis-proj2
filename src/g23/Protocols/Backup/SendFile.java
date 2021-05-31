@@ -1,4 +1,4 @@
-package g23.Protocols;
+package g23.Protocols.Backup;
 
 import g23.Messages.Message;
 import g23.Peer;
@@ -7,6 +7,7 @@ import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;

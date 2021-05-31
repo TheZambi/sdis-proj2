@@ -1,4 +1,4 @@
-package g23.Protocols;
+package g23.Protocols.Backup;
 
 import g23.FileInfo;
 import g23.Messages.Message;
@@ -86,7 +86,7 @@ public class ReceiveFile {
                     System.out.println("STORED FILE " + key);
 
                     // Add to out storedfiles map
-                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getCurrentReplicationDegree(), this.message.getReplicationDegree(), this.peer);
+                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getReplicationDegree(), this.peer.getPeerInfo());
                     this.peer.getStoredFiles().put(key, fi);
                     this.message.decrementCurrentReplication();
                 } else {

@@ -1,8 +1,9 @@
-package g23.Protocols;
+package g23.Protocols.Reclaim;
 
-import g23.MessageSender;
+import g23.RemovedMessagePropSender;
 import g23.Messages.Message;
 import g23.Peer;
+import g23.Protocols.Backup.Backup;
 
 public class ReceiveRemoved {
     private final Peer peer;
@@ -40,7 +41,7 @@ public class ReceiveRemoved {
         } else { // send message to successor
 
             System.out.println("RECEIVED REMOVED " + message.getFileId() + ". FORWARDING...");
-            (new MessageSender(message, this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort())).run();
+            (new RemovedMessagePropSender(message, this.peer)).run();
         }
     }
 }
