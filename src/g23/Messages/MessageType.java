@@ -5,6 +5,7 @@ public enum MessageType {
     GETFILE,
     PUTFILE,
     CHUNK,
+    IDELETED,
     DELETE,
     REMOVED,
     DELETED,

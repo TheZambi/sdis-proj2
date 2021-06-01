@@ -17,7 +17,7 @@ public class Message implements Serializable {
 
     public Message(MessageType type, String[] args, byte[] body) {
         this.type = type;
-        this.senderId = Integer.parseInt(args[0]);
+        this.senderId = Long.parseLong(args[0]);
         this.fileId = Long.parseLong(args[1]);
         this.body = body;
 
@@ -39,6 +39,9 @@ public class Message implements Serializable {
         } else if (type == MessageType.DELETE) {
             this.replicationDegree = -1;
             this.currentReplicationsDegree = Integer.parseInt(args[2]);
+        } else if (type == MessageType.IDELETED) {
+            this.replicationDegree = -1;
+            this.currentReplicationsDegree = -1;
         }
     }
 

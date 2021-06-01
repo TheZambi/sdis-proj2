@@ -50,10 +50,13 @@ public class Reclaim implements Runnable {
             Files.delete(Path.of("backup/" + stringFileInfoEntry.getKey()));
 
             System.out.println("DELETED FILE " + stringFileInfoEntry.getKey());
-            peer.removeSpace(fileInfo.getSize());
-            peer.getStoredFiles().remove(stringFileInfoEntry.getKey());
+
+            (new IDeletedMessageSender(this.peer, msgToSend.getFileId())).run();
 
             (new BackupMessageSender(this.peer, msgToSend)).run();
+
+            peer.removeSpace(fileInfo.getSize());
+            peer.getStoredFiles().remove(stringFileInfoEntry.getKey());
 
         } catch (Exception e) {
             e.printStackTrace();

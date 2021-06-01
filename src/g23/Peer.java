@@ -5,16 +5,17 @@ import g23.Protocols.Restore.Restore;
 import g23.Protocols.Reclaim.Reclaim;
 import g23.Protocols.Delete.Delete;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -22,13 +23,13 @@ public class Peer implements ChordNode {
 
     //Chord can hold 2^m nodes
     //Chord related fields
-    // private static final int m = 256;
-    private static final int m = 5;
+     private static final int m = 128;
+//    private static final int m = 5;
 
     //Time intervals for stabilization methods
     private static final int STABILIZER_INTERVAL = 500;
     private static final int SUCCESSORS_FINDER_INTERVAL = 500;
-    private static final int FINGER_FIXER_INTERVAL = 500;
+    private static final int FINGER_FIXER_INTERVAL = 20;
     private static final int PREDECESSOR_CHECKER_INTERVAL = 500;
 
     //Chord related services (used to stabilize the network)
@@ -46,7 +47,7 @@ public class Peer implements ChordNode {
     private PeerInfo predecessor;
     private ArrayList<PeerInfo> successors;
     private int next; //Used for fix_fingers method
-    private ConcurrentMap<Long, ArrayList<Long>> filesStoredinPeers;
+    private ConcurrentMap<Long, HashSet<Long>> filesStoredinPeers;
 
     private final PeerInfo info;
 
@@ -93,7 +94,7 @@ public class Peer implements ChordNode {
 
         this.predecessor = null;
         this.successors = new ArrayList<>();
-        this.fingerTable.set(0, new PeerInfo(address, Peer.calculateID(address)));
+        this.fingerTable.set(0, this.info);
 
         this.stabilizer = Executors.newSingleThreadScheduledExecutor();
         this.successorFinder = Executors.newSingleThreadScheduledExecutor();
@@ -121,12 +122,10 @@ public class Peer implements ChordNode {
     }
 
 
-
     public void peersAreAlive(){
         ArrayList<Map.Entry<Long, Long>> stuffToDelete = new ArrayList<>();
-
         try {
-            for (Map.Entry<Long, ArrayList<Long>> entry : this.filesStoredinPeers.entrySet()) {
+            for (Map.Entry<Long, HashSet<Long>> entry : this.filesStoredinPeers.entrySet()) {
                 for (Long l : entry.getValue()) {
 
                     if (this.findSuccessor(l).getId() != l)
@@ -216,20 +215,20 @@ public class Peer implements ChordNode {
 
     private static long calculateID(InetSocketAddress address) {
 
-//        MessageDigest digest = null;
-//        try {
-//            digest = MessageDigest.getInstance("SHA-256");
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//
-//        byte[] hash = digest.digest(address.toString().getBytes());
-//        UUID id = UUID.nameUUIDFromBytes(hash);
-//        long idInt = id.getLeastSignificantBits() * -1;
-////        idInt = Math.round(idInt % Math.pow(2, Peer.m));
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
 
-        long idInt = address.getPort() - 8000;
+        byte[] hash = digest.digest(address.toString().getBytes());
+        UUID id = UUID.nameUUIDFromBytes(hash);
+        long idInt = id.getLeastSignificantBits() * -1; // UUID LSB always returns negative numbers
+//        long idInt = address.getPort() - 8000;
         idInt = Math.round(idInt % Math.pow(2, Peer.m));
+
+        System.out.println("My id is: " + idInt);
         return idInt;
     }
 
@@ -407,8 +406,7 @@ public class Peer implements ChordNode {
 
         next += 1;
         if (next > m) {
-            System.err.println("Resetting next value!");
-            this.printInfo();
+//            this.printInfo();
             next = 1;
         }
 //        System.err.println("Starting Fix Finger" + (next - 1));
@@ -498,7 +496,7 @@ public class Peer implements ChordNode {
         return storedFiles;
     }
 
-    public ConcurrentMap<Long, ArrayList<Long>> getFilesStoredInPeers() {
+    public ConcurrentMap<Long, HashSet<Long>> getFilesStoredInPeers() {
         return filesStoredinPeers;
     }
 
@@ -523,27 +521,22 @@ public class Peer implements ChordNode {
     }
 
     public static long getFileId(String path, long peerID) {
-//        MessageDigest digest = null;
-//
-//        File file = new File(path);
-//
-//        try {
-//            digest = MessageDigest.getInstance("SHA-256");
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//        byte[] hash = digest.digest((path + file.lastModified() + peerID).getBytes());
-//
-//        StringBuilder result = new StringBuilder();
-//        for (byte b : hash) {
-//            result.append(Character.forDigit((b >> 4) & 0xF, 16))
-//                    .append(Character.forDigit((b & 0xF), 16));
-//        }
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest((path + Files.getLastModifiedTime(Path.of(path)) + peerID).getBytes());
 
+            UUID id = UUID.nameUUIDFromBytes(hash);
+            long idLong = id.getLeastSignificantBits() * -1;
+            idLong = idLong % (long) Math.pow(2, Peer.m);
 
-//        return result.toString();
+            return idLong;
 
-        return 5;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+
     }
 
     public void setMaxSpace(long maxSpace) {

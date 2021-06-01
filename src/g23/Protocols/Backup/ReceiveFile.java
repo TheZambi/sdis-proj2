@@ -4,10 +4,13 @@ import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
+import g23.PeerInfo;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -86,7 +89,7 @@ public class ReceiveFile {
                     System.out.println("STORED FILE " + key);
 
                     // Add to out storedfiles map
-                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getReplicationDegree(), this.peer.getPeerInfo());
+                    FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getReplicationDegree(), new PeerInfo(new InetSocketAddress(this.message.getAddress(), this.message.getPort()), this.message.getSenderId()));
                     this.peer.getStoredFiles().put(key, fi);
                     this.message.decrementCurrentReplication();
                 } else {

@@ -9,6 +9,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -54,13 +55,13 @@ public class Backup implements Runnable {
     public void run() {
 
         if (message == null) {
-
             long fileSize = 0;
             Path filePath;
 
             if (path == null) { //peer has a backup of the file
-                if (!this.peer.getStoredFiles().containsKey(hash))
+                if (!this.peer.getStoredFiles().containsKey(hash)){
                     return;
+                }
                 filePath = Path.of("backup/" + hash);
                 try {
                     fileSize = Files.size(filePath);
@@ -82,7 +83,7 @@ public class Backup implements Runnable {
                     e.printStackTrace();
                 }
             }
-
+;
             if (hash == -1) //OWNER
                 hash = Peer.getFileId(path, peer.getId());
 
@@ -97,10 +98,7 @@ public class Backup implements Runnable {
             };
 
             Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, null);
-
             (new BackupMessageSender(this.peer, msgToSend)).run();
-
-
 
             if (path != null) //OWNER
                 this.peer.getFiles().put(hash, new FileInfo(path, hash, replicationDegree, peer.getPeerInfo()));

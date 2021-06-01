@@ -46,6 +46,10 @@ public class MessageInterpreter implements Runnable {
                 case DELETE:
                     new DeleteFile(this.peer, msg).handleMessage();
                     break;
+                case IDELETED:
+                    this.peer.getFilesStoredInPeers().get(msg.getFileId()).remove(msg.getSenderId());
+                    break;
+
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 
 /* For sending PUTFILE / REMOVED messages */
 public class BackupMessageSender implements Runnable {
@@ -52,6 +53,7 @@ public class BackupMessageSender implements Runnable {
                 }
             }
 
+
             if (socket == null) {
                 return;
             }
@@ -62,12 +64,12 @@ public class BackupMessageSender implements Runnable {
             oos.writeObject(message);
 
 
-            if(this.peer.getFilesStoredInPeers().get(message.getFileId()) == null)
-                this.peer.getFilesStoredInPeers().put(message.getFileId(), new ArrayList<>(Arrays.asList(succ.getId())));
-            else
-            {
-                if(!this.peer.getFilesStoredInPeers().get(message.getFileId()).contains(succ.getId()))
-                    this.peer.getFilesStoredInPeers().get(message.getFileId()).add(succ.getId());
+            if (!this.peer.getFilesStoredInPeers().containsKey(message.getFileId())) {
+                HashSet<Long> set = new HashSet<>();
+                set.add(succ.getId());
+                this.peer.getFilesStoredInPeers().put(message.getFileId(), set);
+            } else {
+                this.peer.getFilesStoredInPeers().get(message.getFileId()).add(succ.getId());
             }
 
 

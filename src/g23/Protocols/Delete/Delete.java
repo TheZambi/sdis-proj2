@@ -57,7 +57,7 @@ public class Delete implements Runnable {
 
                         for(int i=0; i<this.peer.getSuccessors().size();i++) {
                             try {
-                                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+                                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessors().get(i).getAddress().getPort());
 
                                 break;
                             } catch(IOException e)
@@ -111,7 +111,5 @@ public class Delete implements Runnable {
                 }
             }
         }
-
-
     }
 }
