@@ -62,7 +62,13 @@ public class BackupMessageSender implements Runnable {
             oos.writeObject(message);
 
 
-            this.peer.getFilesStoredInPeers().put(message.getFileId(), new ArrayList<>(Arrays.asList(succ.getId())));
+            if(this.peer.getFilesStoredInPeers().get(message.getFileId()) == null)
+                this.peer.getFilesStoredInPeers().put(message.getFileId(), new ArrayList<>(Arrays.asList(succ.getId())));
+            else
+            {
+                if(!this.peer.getFilesStoredInPeers().get(message.getFileId()).contains(succ.getId()))
+                    this.peer.getFilesStoredInPeers().get(message.getFileId()).add(succ.getId());
+            }
 
 
         } catch (Exception e) {
