@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 
 public class Backup implements Runnable {
@@ -98,6 +99,8 @@ public class Backup implements Runnable {
             Message msgToSend = new Message(MessageType.PUTFILE, msgArgs, null);
 
             (new BackupMessageSender(this.peer, msgToSend)).run();
+
+            this.peer.getFilesStoredInPeers().put(hash, new ArrayList<>());
 
             if (path != null) //OWNER
                 this.peer.getFiles().put(hash, new FileInfo(path, hash, replicationDegree, peer.getPeerInfo()));

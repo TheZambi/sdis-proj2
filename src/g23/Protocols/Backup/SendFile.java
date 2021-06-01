@@ -56,5 +56,7 @@ public class SendFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        this.peer.getFilesStoredInPeers().get(this.message.getFileId()).add(this.message.getSenderId());
     }
 }

@@ -32,12 +32,13 @@ public class Peer implements ChordNode {
     private static final int PREDECESSOR_CHECKER_INTERVAL = 500;
 
     //Chord related services (used to stabilize the network)
-    private ScheduledExecutorService stabilizer;
-    private ScheduledExecutorService successorFinder;
-    private ScheduledExecutorService fingerFixer;
-    private ScheduledExecutorService predecessorChecker;
-    private ScheduledExecutorService protocolPool;
-    private ScheduledExecutorService stateSaver;
+    private final ScheduledExecutorService stabilizer;
+    private final ScheduledExecutorService successorFinder;
+    private final ScheduledExecutorService fingerFixer;
+    private final ScheduledExecutorService predecessorChecker;
+    private final ScheduledExecutorService protocolPool;
+    private final ScheduledExecutorService stateSaver;
+    private final ScheduledExecutorService checkIfPeersAreAlive;
 
 
     // Chord related information stored by each node
@@ -45,6 +46,7 @@ public class Peer implements ChordNode {
     private PeerInfo predecessor;
     private ArrayList<PeerInfo> successors;
     private int next; //Used for fix_fingers method
+    private ConcurrentMap<Long, ArrayList<Long>> filesStoredinPeers;
 
     private final PeerInfo info;
 
@@ -62,22 +64,22 @@ public class Peer implements ChordNode {
 
     public static void main(String[] args) throws IOException {
 
-        String rmiHost = args[0];
+//        String rmiHost = args[0];
 
-        String address = args[1].split(":")[0];
-        int port = Integer.parseInt(args[1].split(":")[1]);
+        String address = args[0].split(":")[0];
+        int port = Integer.parseInt(args[0].split(":")[1]);
 
-        Peer peer = new Peer(new InetSocketAddress(address, port), rmiHost);
-        if (args.length == 3) {
-            String toJoinAddress = args[2].split(":")[0];
-            int toJoinPort = Integer.parseInt(args[2].split(":")[1]);
+        Peer peer = new Peer(new InetSocketAddress(address, port));
+        if (args.length == 2) {
+            String toJoinAddress = args[1].split(":")[0];
+            int toJoinPort = Integer.parseInt(args[1].split(":")[1]);
 
             InetSocketAddress toJoinInfo = new InetSocketAddress(toJoinAddress, toJoinPort);
             peer.join(new PeerInfo(toJoinInfo, Peer.calculateID(toJoinInfo)));
         }
     }
 
-    public Peer(InetSocketAddress address, String rmiHost) throws IOException {
+    public Peer(InetSocketAddress address) throws IOException {
 
         this.info = new PeerInfo(address, Peer.calculateID(address));
         this.next = 0;
@@ -100,11 +102,13 @@ public class Peer implements ChordNode {
         this.listenerThread = Executors.newSingleThreadExecutor();
         this.protocolPool = Executors.newScheduledThreadPool(16);
         this.stateSaver = Executors.newSingleThreadScheduledExecutor();
+        this.checkIfPeersAreAlive = Executors.newSingleThreadScheduledExecutor();
 
         this.files = new ConcurrentHashMap<>();
         this.storedFiles = new ConcurrentHashMap<>();
+        this.filesStoredinPeers = new ConcurrentHashMap<>();
         this.filesToRestore = new HashSet<>();
-        this.bindRMI(this.info.getId(), rmiHost);
+        this.bindRMI(this.info.getId());
         this.readState();
 
         this.listenerThread.execute(new ConnectionDispatcher(this));
@@ -113,6 +117,24 @@ public class Peer implements ChordNode {
         this.fingerFixer.scheduleAtFixedRate(this::fix_fingers, Peer.FINGER_FIXER_INTERVAL, Peer.FINGER_FIXER_INTERVAL, TimeUnit.MILLISECONDS);
         this.predecessorChecker.scheduleAtFixedRate(this::check_predecessor, Peer.PREDECESSOR_CHECKER_INTERVAL, Peer.PREDECESSOR_CHECKER_INTERVAL, TimeUnit.MILLISECONDS);
         this.stateSaver.scheduleAtFixedRate(new Synchronizer(this), 1, 1, TimeUnit.SECONDS);
+        this.checkIfPeersAreAlive.scheduleAtFixedRate(this::peersAreAlive, 1, 1, TimeUnit.SECONDS);
+    }
+
+    public void peersAreAlive(){
+        try {
+            for (Map.Entry<Long, ArrayList<Long>> entry : this.filesStoredinPeers.entrySet()) {
+                for (Long l : entry.getValue()) {
+                    if (this.findSuccessor(l).getId() != l)
+                    {
+                        this.protocolPool.execute(new Backup(this,
+                                this.files.get(entry.getKey()).getPath(), 1, 1));
+                    }
+                }
+            }
+        } catch(Exception e)
+        {
+            System.out.println("Peer died.");
+        }
     }
 
     private void readState() {
@@ -129,7 +151,6 @@ public class Peer implements ChordNode {
             e.printStackTrace();
         }
     }
-
 
     @Override
     public void backup(String path, int replicationDegree) throws RemoteException {
@@ -167,12 +188,12 @@ public class Peer implements ChordNode {
         System.out.println("----------------------");
     }
 
-    public void bindRMI(long id, String host) throws RemoteException {
+    public void bindRMI(long id) throws RemoteException {
         ChordNode stub = (ChordNode) UnicastRemoteObject.exportObject(this, 0);
 
         try {
             // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.getRegistry(host);
+            Registry registry = LocateRegistry.getRegistry();
             registry.rebind(String.valueOf(id), stub);
         } catch (Exception e) {
             e.printStackTrace();
@@ -461,6 +482,10 @@ public class Peer implements ChordNode {
 
     public ConcurrentMap<Long, FileInfo> getStoredFiles() {
         return storedFiles;
+    }
+
+    public ConcurrentMap<Long, ArrayList<Long>> getFilesStoredInPeers() {
+        return filesStoredinPeers;
     }
 
     public long getRemainingSpace() {

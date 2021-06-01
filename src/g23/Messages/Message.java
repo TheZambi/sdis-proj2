@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Message implements Serializable {
 
     private MessageType type;
-    private int senderId;
+    private long senderId;
     private long fileId;
     private int replicationDegree;
     private int currentReplicationsDegree;
@@ -66,7 +66,7 @@ public class Message implements Serializable {
         return type;
     }
 
-    public int getSenderId() {
+    public long getSenderId() {
         return senderId;
     }
 
