@@ -5,11 +5,9 @@ import g23.Protocols.Restore.Restore;
 import g23.Protocols.Reclaim.Reclaim;
 import g23.Protocols.Delete.Delete;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -60,8 +58,13 @@ public class Peer implements ChordNode {
     long maxSpace = 100000000000L; // bytes
     long currentSpace = 0; // bytes
 
+    Registry registry;
+
+
     public static void main(String[] args) throws IOException {
 
+
+//        System.setProperty("java.rmi.server.hostname", "25.2.54.55");
         String rmiHost = args[0];
 
         String address = args[1].split(":")[0];
@@ -157,6 +160,16 @@ public class Peer implements ChordNode {
     }
 
     public void printInfo() {
+        try {
+            System.err.println(Arrays.toString(registry.list()));
+            ChordNode stub = (ChordNode) registry.lookup("10");
+            System.out.println(stub);
+            PeerInfo ni = stub.getPredecessor();
+            System.err.println(ni);
+        } catch (Exception e) {
+            System.err.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+            e.printStackTrace();
+        }
         System.out.println("---------INFO--------");
         System.out.println("ID: " + this.getId());
         System.out.println("IP address: " + this.getAddress().getAddress() + ":" + this.getAddress().getPort());
@@ -171,12 +184,22 @@ public class Peer implements ChordNode {
         ChordNode stub = (ChordNode) UnicastRemoteObject.exportObject(this, 0);
 
         try {
+            Socket sock = new Socket("25.4.145.44", 8099);
+            ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+            oos.writeObject(stub);
             // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.getRegistry(host);
-            registry.rebind(String.valueOf(id), stub);
+//            Registry registry = LocateRegistry.getRegistry(host);
+//            registry.rebind(String.valueOf(id), stub);
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Couldn't bind RMI");
+        }
+
+        try {
+            Thread.sleep(5000);
+            this.registry = LocateRegistry.getRegistry("25.4.145.44");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -210,7 +233,6 @@ public class Peer implements ChordNode {
             }
 
             try {
-                Registry registry = LocateRegistry.getRegistry();
                 ChordNode stub = (ChordNode) registry.lookup(String.valueOf(closestPeer.getId()));
 
                 return stub.findSuccessor(id);
@@ -257,7 +279,7 @@ public class Peer implements ChordNode {
         PeerInfo ni = null;
         for (int i = 0; i < this.successors.size(); i++) {
             try {
-                Registry registry = LocateRegistry.getRegistry();
+//                Registry registry = LocateRegistry.getRegistry();
                 ChordNode stub = (ChordNode) registry.lookup(String.valueOf(successors.get(i).getId()));
                 ni = stub.getPredecessor();
                 break;
@@ -289,7 +311,7 @@ public class Peer implements ChordNode {
     public void successorsFinder() {
         PeerInfo ni = null;
         try {
-            Registry registry = LocateRegistry.getRegistry();
+//            Registry registry = LocateRegistry.getRegistry();
             ChordNode stub = (ChordNode) registry.lookup(String.valueOf(fingerTable.get(0).getId()));
             ni = stub.getSuccessor();
         } catch (Exception e) {
@@ -301,7 +323,7 @@ public class Peer implements ChordNode {
         try {
             if (ni != null)
                 if (ni.getId() != this.getId()) {
-                    Registry registry = LocateRegistry.getRegistry();
+//                    Registry registry = LocateRegistry.getRegistry();
                     ChordNode stub = (ChordNode) registry.lookup(String.valueOf(ni.getId()));
                     ns = stub.getSuccessor();
                 }
@@ -325,10 +347,10 @@ public class Peer implements ChordNode {
     public void join(PeerInfo peer) {
         predecessor = null;
 
-        Registry registry;
+//        Registry registry;
         ChordNode stub;
         try {
-            registry = LocateRegistry.getRegistry();
+//            registry = LocateRegistry.getRegistry();
             stub = (ChordNode) registry.lookup(String.valueOf(peer.getId()));
             PeerInfo response = stub.findSuccessor(this.getId());
 
@@ -345,10 +367,10 @@ public class Peer implements ChordNode {
     private void sendNotification(PeerInfo node) {
         if (node.getId() == this.getId())
             return;
-        Registry registry;
+//        Registry registry;
         ChordNode stub;
         try {
-            registry = LocateRegistry.getRegistry();
+//            registry = LocateRegistry.getRegistry();
             stub = (ChordNode) registry.lookup(String.valueOf(node.getId()));
 //            System.out.println("Got Sending notification to: " + node);
             boolean response = stub.notify(this.info);
@@ -395,11 +417,11 @@ public class Peer implements ChordNode {
     public boolean check_predecessor() {
 //        System.out.println("Starting Check For Predecessors");
         if (this.predecessor != null) {
-            Registry registry;
+//            Registry registry;
             ChordNode stub;
 
             try {
-                registry = LocateRegistry.getRegistry();
+//                registry = LocateRegistry.getRegistry();
                 stub = (ChordNode) registry.lookup(String.valueOf(this.predecessor.getId()));
 //                System.out.println("Ending Check For Predecessors : Return True");
                 return stub.isAlive();

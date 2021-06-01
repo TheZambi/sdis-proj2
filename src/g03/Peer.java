@@ -137,7 +137,7 @@ public class Peer implements PeerStub {
                 PeerState peerState = (PeerState) stateInObject.readObject();
                 currentSpace = peerState.currentSpace;
                 maxSpace = peerState.maxSpace;
-                storedChunks = (ConcurrentMap<Long, FileInfo>) peerState.storedChunks;
+//                storedChunks = (ConcurrentMap<Long, FileInfo>) peerState.storedChunks;
                 files = (ConcurrentMap)peerState.files;
                 peersDidNotDeleteFiles = (ConcurrentMap)peerState.peersDidNotDeleteFiles;
                 ongoing = peerState.onGoingOperations;
@@ -223,8 +223,8 @@ public class Peer implements PeerStub {
             return;
         ongoing.add(opName);
 
-        Restore restoreRun = new Restore(this, path);
-        restorePool.execute(restoreRun);
+//        Restore restoreRun = new Restore(this, path);
+//        restorePool.execute(restoreRun);
     }
 
     @Override
