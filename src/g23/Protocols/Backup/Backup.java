@@ -100,7 +100,7 @@ public class Backup implements Runnable {
 
             (new BackupMessageSender(this.peer, msgToSend)).run();
 
-            this.peer.getFilesStoredInPeers().put(hash, new ArrayList<>());
+
 
             if (path != null) //OWNER
                 this.peer.getFiles().put(hash, new FileInfo(path, hash, replicationDegree, peer.getPeerInfo()));

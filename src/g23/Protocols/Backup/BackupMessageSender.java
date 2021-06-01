@@ -8,6 +8,8 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /* For sending PUTFILE / REMOVED messages */
 public class BackupMessageSender implements Runnable {
@@ -36,6 +38,7 @@ public class BackupMessageSender implements Runnable {
                         socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
                         socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
+                        succ = this.peer.getSuccessors().get(i);
                         break;
                     } catch (IOException e) {
                         if (i == 0) {
@@ -57,6 +60,10 @@ public class BackupMessageSender implements Runnable {
 
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(message);
+
+
+            this.peer.getFilesStoredInPeers().put(message.getFileId(), new ArrayList<>(Arrays.asList(succ.getId())));
+
 
         } catch (Exception e) {
             e.printStackTrace();

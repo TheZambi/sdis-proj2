@@ -117,23 +117,35 @@ public class Peer implements ChordNode {
         this.fingerFixer.scheduleAtFixedRate(this::fix_fingers, Peer.FINGER_FIXER_INTERVAL, Peer.FINGER_FIXER_INTERVAL, TimeUnit.MILLISECONDS);
         this.predecessorChecker.scheduleAtFixedRate(this::check_predecessor, Peer.PREDECESSOR_CHECKER_INTERVAL, Peer.PREDECESSOR_CHECKER_INTERVAL, TimeUnit.MILLISECONDS);
         this.stateSaver.scheduleAtFixedRate(new Synchronizer(this), 1, 1, TimeUnit.SECONDS);
-        this.checkIfPeersAreAlive.scheduleAtFixedRate(this::peersAreAlive, 1, 1, TimeUnit.SECONDS);
+        this.checkIfPeersAreAlive.scheduleAtFixedRate(this::peersAreAlive, 5, 5, TimeUnit.SECONDS);
     }
 
+
+
     public void peersAreAlive(){
+        ArrayList<Map.Entry<Long, Long>> stuffToDelete = new ArrayList<>();
+
         try {
             for (Map.Entry<Long, ArrayList<Long>> entry : this.filesStoredinPeers.entrySet()) {
                 for (Long l : entry.getValue()) {
+
                     if (this.findSuccessor(l).getId() != l)
                     {
-                        this.protocolPool.execute(new Backup(this,
-                                this.files.get(entry.getKey()).getPath(), 1, 1));
+                        stuffToDelete.add(new AbstractMap.SimpleEntry<>(entry.getKey(),l));
+
+                        this.protocolPool.schedule(new Backup(this,
+                                this.files.get(entry.getKey()).getPath(), 1, 1),
+                                5, TimeUnit.SECONDS);
                     }
                 }
             }
-        } catch(Exception e)
-        {
+        } catch(Exception e) {
             System.out.println("Peer died.");
+        }
+
+        for(Map.Entry<Long, Long> toDelete : stuffToDelete)
+        {
+            this.filesStoredinPeers.get(toDelete.getKey()).remove(toDelete.getValue());
         }
     }
 
@@ -174,6 +186,7 @@ public class Peer implements ChordNode {
 
     @Override
     public PeerState state() throws RemoteException {
+        System.out.println("Saving state");
         return new PeerState(maxSpace, currentSpace, files, storedFiles, null); //TODO CHANGE ONGOING
     }
 
@@ -259,9 +272,9 @@ public class Peer implements ChordNode {
 
     public boolean chordIdInBetween(long id, PeerInfo peer1, PeerInfo peer2) {
         if (peer1.getId() < peer2.getId()) {
-            return peer1.getId() < id && id < peer2.getId();
+            return peer1.getId() < id && id <= peer2.getId();
         } else {
-            return (peer1.getId() < id && id < Math.pow(2, m)) || (0 <= id && id < peer2.getId());
+            return (peer1.getId() < id && id < Math.pow(2, m)) || (0 <= id && id <= peer2.getId());
         }
     }
 
@@ -339,7 +352,7 @@ public class Peer implements ChordNode {
             if (ns.getId() != this.getId() && !this.getSuccessors().contains(ns))
                 this.getSuccessors().add(ns);
 
-        System.err.println(this.getSuccessors().toString());
+//        System.err.println(this.getSuccessors().toString());
     }
 
     // TODO fail to join
@@ -394,6 +407,7 @@ public class Peer implements ChordNode {
 
         next += 1;
         if (next > m) {
+            System.err.println("Resetting next value!");
             this.printInfo();
             next = 1;
         }
