@@ -4,7 +4,6 @@ import g23.Protocols.Backup.Backup;
 import g23.Protocols.Restore.Restore;
 import g23.Protocols.Reclaim.Reclaim;
 import g23.Protocols.Delete.Delete;
-import g23.SSLEngine.ConnectionDispatcher;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -319,7 +318,7 @@ public class Peer implements ChordNode {
             if (ns.getId() != this.getId() && !this.getSuccessors().contains(ns))
                 this.getSuccessors().add(ns);
 
-        System.err.println(this.getSuccessors().toString());
+//        System.err.println(this.getSuccessors().toString());
     }
 
     // TODO fail to join
@@ -374,7 +373,7 @@ public class Peer implements ChordNode {
 
         next += 1;
         if (next > m) {
-            this.printInfo();
+//            this.printInfo();
             next = 1;
         }
 //        System.err.println("Starting Fix Finger" + (next - 1));

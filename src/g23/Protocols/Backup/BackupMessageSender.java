@@ -3,9 +3,11 @@ package g23.Protocols.Backup;
 import g23.Messages.Message;
 import g23.Peer;
 import g23.PeerInfo;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
@@ -22,19 +24,24 @@ public class BackupMessageSender implements Runnable {
     @Override
     public void run() {
 
-        SSLSocket socket = null;
+//        SSLSocket socket = null;
         try {
             long fileId = message.getFileId();
             PeerInfo succ = this.peer.findSuccessor(fileId);
 
+            SSLClient toSendMsg = null;
+
             if (succ.getId() != this.peer.getId()) {
-                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succ.getAddress().getAddress(), succ.getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+//                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succ.getAddress().getAddress(), succ.getAddress().getPort());
+//                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                System.out.println(succ.getAddress());
+                 toSendMsg = new SSLClient(succ.getAddress());
             } else {
                 for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
                     try {
-                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
-                        socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+//                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
+//                        socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                        toSendMsg = new SSLClient(this.peer.getSuccessors().get(i).getAddress());
 
                         break;
                     } catch (IOException e) {
@@ -49,14 +56,25 @@ public class BackupMessageSender implements Runnable {
                 }
             }
 
-            if (socket == null) {
+            if (toSendMsg == null) {
                 return;
             }
 
-            System.out.println("Sending " + this.message.getType().toString() + " of file " + fileId + " to " + socket.getPort());
+            System.out.println("Sending " + this.message.getType().toString() + " of file " + fileId + " to " + toSendMsg.getAddress().getPort());
 
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            oos.writeObject(message);
+//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+//            oos.writeObject(message);
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this.message);
+            oos.flush();
+            byte[] msg = bos.toByteArray();
+            toSendMsg.doHandshake();
+            toSendMsg.write(msg);
+            bos.close();
+
+            toSendMsg.shutdown();
 
         } catch (Exception e) {
             e.printStackTrace();

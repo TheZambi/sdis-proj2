@@ -12,13 +12,8 @@ public class SSLServer extends SSLEngineOrchestrator {
     private SocketChannel socketChannel;
 
 
-    protected SSLServer(SocketChannel socketChannel, InetSocketAddress address, SSLContext sslContext) {
+    public SSLServer(SocketChannel socketChannel, InetSocketAddress address, SSLContext sslContext) {
         super(socketChannel, sslContext, address, false);
         this.sslContext = sslContext;
     }
-
-
-     public void close() throws IOException {
-        this.socketChannel.close();
-     }
 }

@@ -4,10 +4,13 @@ import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -52,10 +55,19 @@ public class ReceiveFile {
 
                     System.out.println("RECEIVING File " + key);
 
-                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
-                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+//                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
+//                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                    SSLClient fromServer = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
+                    fromServer.doHandshake();
 
-                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
+                    oos.writeObject(this.message);
+                    oos.flush();
+                    byte[] msg = bos.toByteArray();
+                    fromServer.write(msg);
+                    bos.close();
 
                     String[] msgArgs = {
                             String.valueOf(this.peer.getId()),
@@ -64,22 +76,19 @@ public class ReceiveFile {
                     Message fileRequest = new Message(MessageType.IWANT, msgArgs, null);
                     oos.writeObject(fileRequest);
 
-                    ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
 
                     Path newFile = Files.createFile(Path.of("backup/" + key));
 
                     WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));
 
-                    ByteBuffer buffer = ByteBuffer.allocate(4096);
+                    byte[] buffer = new byte[4096];
 
-                    while (fromInitiator.read(buffer) > 0 || buffer.position() > 0) {
-                        buffer.flip();
-                        toNewFile.write(buffer);
-                        buffer.compact();
+                    while (fromServer.read(buffer) > 0) {
+                        toNewFile.write(ByteBuffer.wrap(buffer));
                     }
+                    fromServer.shutdown();
 
                     toNewFile.close();
-                    fromInitiator.close();
 
                     peer.addSpace(message.getFileSize());
 

@@ -1,4 +1,4 @@
-package g23.SSLEngine;
+package g23;
 
 import g23.MessageInterpreter;
 import g23.Peer;
@@ -26,6 +26,7 @@ public class ConnectionDispatcher implements Runnable {
             this.sslContext = SSLEngineOrchestrator.createContext(false,"123456");
             this.channel = ServerSocketChannel.open();
             this.channel.bind(this.peer.getAddress());
+//            System.out.println(channel);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -36,7 +37,7 @@ public class ConnectionDispatcher implements Runnable {
         while (true) {
             try {
                 SocketChannel socketChannel = this.channel.accept();
-
+                System.out.println("ACCEPTED CONNECTION - NEW SOCKETCHANNEL " + socketChannel.getRemoteAddress());
                 this.peer.getProtocolPool().execute(new MessageInterpreter(this.peer, new SSLServer(socketChannel, this.peer.getAddress(), this.sslContext)));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -48,7 +49,7 @@ public class ConnectionDispatcher implements Runnable {
 //    public ConnectionDispatcher(Peer peer) {
 //        this.peer = peer;
 //        try {
-//            this.serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(peer.getAddress().getPort(), 5, peer.getAddress().getAddress());
+//            this.serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(peer.getAddress().getPort(), 5.png, peer.getAddress().getAddress());
 //
 //            //NOT SURE TODO
 //            this.serverSocket.setEnabledCipherSuites(this.serverSocket.getSupportedCipherSuites());

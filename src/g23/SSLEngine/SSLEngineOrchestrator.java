@@ -14,9 +14,9 @@ import java.util.concurrent.Executors;
 
 public abstract class SSLEngineOrchestrator {
 
-    private static final String serverKeysFile = "../../keys/server.keys"; //TODO ?
-    private static final String clientKeysFile = "../../keys/client.keys"; //TODO ?
-    private static final String truststoreFile = "../../keys/truststore"; //TODO ?
+    private static final String serverKeysFile = "../../../../keys/server.keys"; //TODO ?
+    private static final String clientKeysFile = "../../../../keys/client.keys"; //TODO ?
+    private static final String truststoreFile = "../../../../keys/truststore"; //TODO ?
 
     protected final SSLContext sslContext;
     protected final SSLEngine sslEngine;
@@ -38,6 +38,9 @@ public abstract class SSLEngineOrchestrator {
         this.sslEngine.setNeedClientAuth(true);
 
         try {
+            if(isClient)
+                socketChannel.connect(address);
+
             this.socketChannel.configureBlocking(false);
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,9 +64,11 @@ public abstract class SSLEngineOrchestrator {
             SSLEngineResult.HandshakeStatus status = sslEngine.getHandshakeStatus();
 
             while(status != SSLEngineResult.HandshakeStatus.FINISHED && status != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+//                System.out.println(status);
                 switch (sslEngine.getHandshakeStatus()) {
                     case NEED_UNWRAP:
                         status = this.need_unwrap();
+//                        return;
                         break;
                     case NEED_WRAP:
                         status = this.need_wrap();
@@ -100,13 +105,20 @@ public abstract class SSLEngineOrchestrator {
 
         switch(result.getStatus()){
             case BUFFER_OVERFLOW:
+                System.out.println("--------------------------BUFFER OVERFLOW--------------------------------------");
                 if(sslEngine.getSession().getApplicationBufferSize() > appInBuf.capacity()){
                     appInBuf = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
                 } else{
                     appInBuf.clear();
                 }
-                return this.need_unwrap();
+                this.need_unwrap();
+//                break;
             case BUFFER_UNDERFLOW:
+//                System.out.println("------------------------------------BUFFER UNDERFLOW------------------------------");
+//                System.out.println(sslEngine.getSession().getPacketBufferSize());
+//                System.out.println(netInBuf);
+//                System.out.println(appInBuf);
+
                 if(sslEngine.getSession().getPacketBufferSize() > netInBuf.capacity()){
                     netInBuf = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
                 } else{
@@ -114,11 +126,14 @@ public abstract class SSLEngineOrchestrator {
                 }
 
                 try {
-                    socketChannel.read(netInBuf);
+                    int size = socketChannel.read(netInBuf);
+//                    System.out.println(size);
+//                    System.out.println(netInBuf);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 return this.need_unwrap();
+//                break;
             case CLOSED:
                 try {
                     socketChannel.close();
@@ -132,10 +147,10 @@ public abstract class SSLEngineOrchestrator {
         return status;
     }
 
-    public byte[] read() throws IOException {
+    public int read(byte[] buffer) throws IOException {
         int num = socketChannel.read(netInBuf);
         if(num == 0){
-            this.read();
+            this.read(buffer);
         } else{
             this.need_unwrap();
         }
@@ -143,10 +158,11 @@ public abstract class SSLEngineOrchestrator {
         this.appInBuf.flip();
 
         int bytesRead = this.appInBuf.remaining();
+        System.out.println("----READ " + bytesRead + " BYTES----------");
 
-        byte[] messageRead = new byte[bytesRead];
-        this.appInBuf.get(messageRead,0,bytesRead);
-        return messageRead;
+        this.appInBuf.get(buffer,0,bytesRead);
+
+        return bytesRead;
     }
 
     public void write(byte[] message){
@@ -178,7 +194,7 @@ public abstract class SSLEngineOrchestrator {
 //                netOutBuf.compact();
 //            }
 //        }
-        doHandshake();
+//        doHandshake();
 
         try {
             socketChannel.close();
@@ -189,33 +205,40 @@ public abstract class SSLEngineOrchestrator {
 
     public SSLEngineResult.HandshakeStatus need_wrap() throws SSLException {
         netOutBuf.clear();
+        appOutBuf.flip();
 
         SSLEngineResult result = null;
         try {
-            result = sslEngine.wrap(netOutBuf, appOutBuf);
+            result = sslEngine.wrap(appOutBuf, netOutBuf);
         } catch (SSLException e) {
             e.printStackTrace();
         }
+        appOutBuf.compact();
+
         SSLEngineResult.HandshakeStatus status = result.getHandshakeStatus();
 
+//        System.out.println("-------------INSIDE NEED_WRAP------------------------");
+//        System.out.println(result.getStatus());
         switch(result.getStatus()){
             case BUFFER_OVERFLOW:
-                if(sslEngine.getSession().getApplicationBufferSize() > appOutBuf.capacity()){
-                    appOutBuf = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
+                if(sslEngine.getSession().getPacketBufferSize() > netOutBuf.capacity()){
+                    netOutBuf = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
                 } else{
-                    appOutBuf.clear();
+                    netOutBuf.clear();
                 }
                 return this.need_wrap();
             case BUFFER_UNDERFLOW:
                 throw new SSLException("Buffer underflow after wrap");
             case CLOSED:
+            case OK:
+                netOutBuf.flip();
                 try {
-                    socketChannel.close();
+                    int bytesWritten = socketChannel.write(netOutBuf);
+                    System.out.println("WRITE IN CHANNEL " + bytesWritten + " BYTES " + result.getStatus());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return status;
-            case OK:
+                netOutBuf.compact();
                 return status;
         }
         return status;

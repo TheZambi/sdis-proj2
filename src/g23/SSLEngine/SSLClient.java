@@ -9,10 +9,14 @@ public class SSLClient extends SSLEngineOrchestrator {
 
     private SocketChannel socketChannel;
     private SSLContext sslContext;
+    private InetSocketAddress address;
 
-    protected SSLClient(InetSocketAddress address, SSLContext context) throws Exception {
-        super(SocketChannel.open().bind(address), SSLEngineOrchestrator.createContext(true,"123456"), address, true);
-        this.sslContext = context;
+    public SSLClient(InetSocketAddress address) throws Exception {
+        super(SocketChannel.open(), SSLEngineOrchestrator.createContext(true,"123456"), address, true);
+        this.address = address;
     }
 
+    public InetSocketAddress getAddress() {
+        return address;
+    }
 }
