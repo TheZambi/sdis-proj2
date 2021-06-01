@@ -69,6 +69,7 @@ public class ReceiveFile {
 
                     ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
 
+                    Files.deleteIfExists(Path.of("backup/" + key));
                     Path newFile = Files.createFile(Path.of("backup/" + key));
 
                     WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));

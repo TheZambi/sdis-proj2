@@ -33,6 +33,7 @@ public class ReceiveRestoreFile {
             try {
                 //Receiving and storing the file
                 ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
+                Files.deleteIfExists(Path.of("restore/" + fileToBeRestored.getPath()));
                 Path newFile = Files.createFile(Path.of("restore/" + fileToBeRestored.getPath()));
                 WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));
                 ByteBuffer buffer = ByteBuffer.allocate(4096);
