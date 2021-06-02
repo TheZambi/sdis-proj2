@@ -53,13 +53,13 @@ public class MessageInterpreter implements Runnable {
                     (new SendFile(this.peer, msg, sslServer)).handleMessage();
                     break;
                 //we will receive a file we requested to restore
-//                case RESTOREFILE:
-//                    (new ReceiveRestoreFile(this.peer, msg, this.socket)).handleMessage();
-//                    break;
+                case RESTOREFILE:
+                    (new ReceiveRestoreFile(this.peer, msg, sslServer)).handleMessage();
+                    break;
                 //Request to restore a file
-//                case GETFILE:
-//                    (new SendRestoreFile(this.peer, msg)).handleMessage();
-//                    break;
+                case GETFILE:
+                    (new SendRestoreFile(this.peer, msg)).handleMessage();
+                    break;
                 case REMOVED:
                     (new ReceiveRemoved(this.peer, msg)).handleMessage();
                     break;

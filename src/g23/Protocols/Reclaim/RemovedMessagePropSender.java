@@ -39,6 +39,8 @@ public class RemovedMessagePropSender implements Runnable {
                 fromServer.write(msg, msg.length);
                 bos.close();
 
+                fromServer.shutdown();
+
                 break;
             } catch(Exception e){
                 if(i == 0)

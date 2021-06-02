@@ -3,9 +3,11 @@ package g23.Protocols.Restore;
 import g23.*;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Map;
@@ -43,16 +45,15 @@ public class Restore implements Runnable {
             };
             Message msgToSend = new Message(MessageType.GETFILE, msgArgs, null);
 
-            SSLSocket socket = null;
+            SSLClient sslClient = null;
+
             if (succID.getId() != this.peer.getId()) {
-                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                sslClient = new SSLClient(succID.getAddress());
             } else {
 
                 for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
                     try {
-                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessor().getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
-                        socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                        sslClient = new SSLClient(this.peer.getSuccessor().getAddress());
                         break;
                     } catch (IOException e) {
                         if (i == 0) {
@@ -67,12 +68,18 @@ public class Restore implements Runnable {
 
             }
 
-            if (socket == null) {
+            if (sslClient == null) {
                 return;
             }
 
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(msgToSend);
+            oos.flush();
+            byte[] msg = bos.toByteArray();
+            sslClient.write(msg, msg.length);
+            bos.close();
+            sslClient.shutdown();
 
             //Add file to set of files to restore so that when we receive a conection it can be validated
             //TODO maybe make a timeout if the file doesnt come

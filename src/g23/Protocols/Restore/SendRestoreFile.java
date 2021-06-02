@@ -5,11 +5,14 @@ import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -72,25 +75,35 @@ public class SendRestoreFile {
                 Message msg = new Message(MessageType.RESTOREFILE, msgArgs, null);
 
                 //Creating the socket to the file requester
-                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+                SSLClient sslClient = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
+
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(bos);
                 oos.writeObject(msg);
+                oos.flush();
+                byte[] msgToSend = bos.toByteArray();
+                sslClient.write(msgToSend, msgToSend.length);
+                bos.close();
 
-
-                WritableByteChannel toPeer = Channels.newChannel(socket.getOutputStream());
                 ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(Path.of("backup/" + fileInfo.getHash())));
                 ByteBuffer buffer = ByteBuffer.allocate(4096);
-                while (fromFile.read(buffer) > 0 || buffer.position() > 0) {
+
+                System.out.println("SENDING FILE CHUNK (RESTORE)----------------------------------------------------------------------LOL-");
+                int bytesRead = 0;
+                while ((bytesRead = fromFile.read(buffer)) > 0 || buffer.position() > 0) {
+                    System.out.println("SENDING FILE CHUNK (RESTORE)-----------------------------------------------------------------------");
+                    System.out.println(buffer);
                     buffer.flip();
-                    toPeer.write(buffer);
-                    buffer.compact();
+                    sslClient.write(buffer.array(), bytesRead);
+                    buffer.clear();
                 }
 
-                toPeer.close();
                 fromFile.close();
 
-            } catch (IOException e) {
+                sslClient.shutdown();
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

@@ -5,9 +5,11 @@ import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 
 public class IDeletedMessageSender implements Runnable {
@@ -31,20 +33,25 @@ public class IDeletedMessageSender implements Runnable {
         Message message = new Message(MessageType.IDELETED, msgArgs, null);
 
 
-        SSLSocket socket = null;
+//        SSLSocket socket = null;
+        SSLClient sslClient = null;
+
         try {
             long fileId = message.getFileId();
             FileInfo fi = this.peer.getStoredFiles().get(fileId);
             PeerInfo pi = fi.getPeerInfo();
 
-            socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(pi.getAddress().getAddress(), pi.getAddress().getPort());
-            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+            sslClient = new SSLClient(pi.getAddress());
 
-
-
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(message);
+            oos.flush();
+            byte[] msg = bos.toByteArray();
+            sslClient.write(msg, msg.length);
+            bos.close();
 
+            sslClient.shutdown();
 
         } catch (Exception e) {
             e.printStackTrace();
