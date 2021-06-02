@@ -24,7 +24,6 @@ public class Peer implements ChordNode {
     //Chord can hold 2^m nodes
     //Chord related fields
     private static final int m = 64;
-//    private static final int m = 5;
 
     //Time intervals for stabilization methods
     private static final int STABILIZER_INTERVAL = 500;
@@ -64,9 +63,6 @@ public class Peer implements ChordNode {
     long currentSpace = 0; // bytes
 
     public static void main(String[] args) throws IOException {
-
-//        String rmiHost = args[0];
-
         String address = args[0].split(":")[0];
         int port = Integer.parseInt(args[0].split(":")[1]);
 
@@ -159,7 +155,6 @@ public class Peer implements ChordNode {
             maxSpace = peerState.maxSpace;
             storedFiles = (ConcurrentMap<Long, FileInfo>) peerState.storedfiles;
             files = (ConcurrentMap<Long, FileInfo>) peerState.files;
-//            ongoing = peerState.onGoingOperations;
         } catch (FileNotFoundException ignored) {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -188,7 +183,6 @@ public class Peer implements ChordNode {
 
     @Override
     public PeerState state() throws RemoteException {
-//        System.out.println(this.getSuccessor().toString());
         return new PeerState(maxSpace, currentSpace, files, storedFiles, null); //TODO CHANGE ONGOING
     }
 
@@ -196,10 +190,6 @@ public class Peer implements ChordNode {
         System.out.println("---------INFO--------");
         System.out.println("ID: " + this.getId());
         System.out.println("IP address: " + this.getAddress().getAddress() + ":" + this.getAddress().getPort());
-//        System.out.println("Predecessor: " + this.predecessor);
-//        for (int i = 0; i < Peer.m; i++) {
-//            System.out.println("Finger " + i + ":" + fingerTable.get(i));
-//        }
         System.out.println("----------------------");
     }
 
@@ -228,10 +218,8 @@ public class Peer implements ChordNode {
         byte[] hash = digest.digest(address.toString().getBytes());
         UUID id = UUID.nameUUIDFromBytes(hash);
         long idInt = id.getLeastSignificantBits() * -1; // UUID LSB always returns negative numbers
-//        long idInt = address.getPort() - 8000;
         idInt = Math.round(idInt % Math.pow(2, Peer.m));
 
-//        System.out.println("My id is: " + idInt);
         return idInt;
     }
 
@@ -257,7 +245,6 @@ public class Peer implements ChordNode {
                         this.fingerTable.set(i, null);
 
                 }
-//                e.printStackTrace();
             }
         }
         return null;
@@ -294,7 +281,6 @@ public class Peer implements ChordNode {
     }
 
     public void stabilize() {
-//        System.out.println("Starting Stabilization");
         PeerInfo ni = null;
         for (int i = 0; i < this.successors.size(); i++) {
             try {
@@ -310,7 +296,6 @@ public class Peer implements ChordNode {
                     return;
                 }
                 System.out.println("Couldn't find successor to stabilize, trying the next on the successor list.");
-//            e.printStackTrace();
             }
         }
 
@@ -323,8 +308,6 @@ public class Peer implements ChordNode {
             fingerTable.set(0, ni);
 
         this.sendNotification(this.fingerTable.get(0));
-//        System.out.println("Ending Stabilization");
-//        printInfo();
     }
 
     public void successorsFinder() {
@@ -334,7 +317,6 @@ public class Peer implements ChordNode {
             ChordNode stub = (ChordNode) registry.lookup(String.valueOf(fingerTable.get(0).getId()));
             ni = stub.getSuccessor();
         } catch (Exception e) {
-//            e.printStackTrace();
         }
 
 
@@ -347,7 +329,6 @@ public class Peer implements ChordNode {
                     ns = stub.getSuccessor();
                 }
         } catch (Exception e) {
-//            e.printStackTrace();
         }
 
         this.getSuccessors().clear();
@@ -359,7 +340,6 @@ public class Peer implements ChordNode {
             if (ns.getId() != this.getId() && !this.getSuccessors().contains(ns))
                 this.getSuccessors().add(ns);
 
-//        System.err.println(this.getSuccessors().toString());
     }
 
     // TODO fail to join
@@ -391,19 +371,15 @@ public class Peer implements ChordNode {
         try {
             registry = LocateRegistry.getRegistry();
             stub = (ChordNode) registry.lookup(String.valueOf(node.getId()));
-//            System.out.println("Got Sending notification to: " + node);
             boolean response = stub.notify(this.info);
 
         } catch (RemoteException | NotBoundException e) {
-//            e.printStackTrace();
         }
 
     }
 
     public boolean notify(PeerInfo node) throws RemoteException {
-//        System.out.println("Got notified by: " + node);
         if (this.predecessor == null || chordIdInBetween(node.getId(), this.predecessor, this.info)) {
-//            System.out.println("My new predecessor is: " + node);
             this.predecessor = node;
             return true;
         }
@@ -414,18 +390,13 @@ public class Peer implements ChordNode {
 
         next += 1;
         if (next > m) {
-//            this.printInfo();
             next = 1;
         }
-//        System.err.println("Starting Fix Finger" + (next - 1));
         try {
             fingerTable.set(next - 1, findSuccessor((this.getId() + (long) Math.pow(2, next - 1)) % (long) Math.pow(2, m)));
         } catch (RemoteException e) {
             this.fingerTable.set(next - 1, null);
-//            e.printStackTrace();
         }
-//        System.err.println("Ending Fix Finger" + (next - 1));
-//        printInfo();
 
     }
 
@@ -434,7 +405,6 @@ public class Peer implements ChordNode {
     }
 
     public boolean check_predecessor() {
-//        System.out.println("Starting Check For Predecessors");
         if (this.predecessor != null) {
             Registry registry;
             ChordNode stub;
@@ -442,12 +412,9 @@ public class Peer implements ChordNode {
             try {
                 registry = LocateRegistry.getRegistry();
                 stub = (ChordNode) registry.lookup(String.valueOf(this.predecessor.getId()));
-//                System.out.println("Ending Check For Predecessors : Return True");
                 return stub.isAlive();
 
             } catch (RemoteException | NotBoundException e) {
-//                e.printStackTrace();
-//                System.out.println("Ending Check For Predecessors : Return False");
 
                 this.predecessor = null;
 
@@ -455,7 +422,6 @@ public class Peer implements ChordNode {
             }
 
         }
-//        System.out.println("Ending Check For Predecessors : Return False");
 
         return false;
     }

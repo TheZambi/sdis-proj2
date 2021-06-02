@@ -118,7 +118,6 @@ public abstract class SSLEngineOrchestrator {
                 netOutBuf.flip();
                 try {
                     int bytesWritten = socketChannel.write(netOutBuf);
-//                    System.out.println("WRITE IN CHANNEL " + bytesWritten + " BYTES " + result.getStatus());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -127,7 +126,6 @@ public abstract class SSLEngineOrchestrator {
                 netOutBuf.flip();
                 try {
                     int bytesWritten = socketChannel.write(netOutBuf);
-//                    System.out.println("WRITE IN CHANNEL " + bytesWritten + " BYTES " + result.getStatus());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -191,7 +189,6 @@ public abstract class SSLEngineOrchestrator {
         this.appInBuf.flip();
 
         int bytesRead = this.appInBuf.remaining();
-//        System.out.println("----READ " + bytesRead + " BYTES----------");
 
         this.appInBuf.get(buffer,0,bytesRead);
 

@@ -1,12 +1,12 @@
 package g23.Protocols.Restore;
 
-import g23.*;
+import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Messages.MessageType;
+import g23.Peer;
+import g23.PeerInfo;
 import g23.SSLEngine.SSLClient;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -84,10 +84,7 @@ public class Restore implements Runnable {
             System.out.println("SENT GETFILE (" + msgToSend.getFileId() + ") TO " + sslClient.getAddress().getAddress() + ":" + sslClient.getAddress().getPort());
 
             //Add file to set of files to restore so that when we receive a conection it can be validated
-            //TODO maybe make a timeout if the file doesnt come
             this.peer.getFilesToRestore().add(fileId);
-
-//            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

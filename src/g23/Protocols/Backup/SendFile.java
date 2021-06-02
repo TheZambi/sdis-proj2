@@ -4,13 +4,10 @@ import g23.Messages.Message;
 import g23.Peer;
 import g23.SSLEngine.SSLServer;
 
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

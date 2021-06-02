@@ -6,9 +6,6 @@ import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
 import g23.SSLEngine.SSLClient;
-
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 
@@ -33,7 +30,6 @@ public class IDeletedMessageSender implements Runnable {
         Message message = new Message(MessageType.IDELETED, msgArgs, null);
 
 
-//        SSLSocket socket = null;
         SSLClient sslClient = null;
 
         try {

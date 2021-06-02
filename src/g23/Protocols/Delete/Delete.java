@@ -7,10 +7,7 @@ import g23.Peer;
 import g23.PeerInfo;
 import g23.SSLEngine.SSLClient;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;

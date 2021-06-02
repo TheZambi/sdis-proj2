@@ -1,17 +1,12 @@
 package g23.Protocols.Reclaim;
 
 import g23.Messages.Message;
-import g23.Messages.MessageType;
 import g23.Peer;
 import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 public class RemovedMessagePropSender implements Runnable {
 

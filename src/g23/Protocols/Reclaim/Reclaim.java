@@ -26,7 +26,6 @@ public class Reclaim implements Runnable {
                 .takeWhile(m -> peer.getCurrentSpace() > space)
                 .forEach(this::removeFile);
         peer.setMaxSpace(space);
-        //peer.getOngoing().remove("reclaim-" + space);
     }
 
     private void removeFile(Map.Entry<Long, FileInfo> stringFileInfoEntry) {

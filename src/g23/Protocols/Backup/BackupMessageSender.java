@@ -5,13 +5,9 @@ import g23.Peer;
 import g23.PeerInfo;
 import g23.SSLEngine.SSLClient;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 
 /* For sending PUTFILE / REMOVED messages */
@@ -27,7 +23,6 @@ public class BackupMessageSender implements Runnable {
     @Override
     public void run() {
 
-//        SSLSocket socket = null;
         try {
             long fileId = message.getFileId();
             PeerInfo succ = this.peer.findSuccessor(fileId);
@@ -35,15 +30,11 @@ public class BackupMessageSender implements Runnable {
             SSLClient toSendMsg = null;
 
             if (succ.getId() != this.peer.getId()) {
-//                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succ.getAddress().getAddress(), succ.getAddress().getPort());
-//                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                 System.out.println(succ.getAddress());
                  toSendMsg = new SSLClient(succ.getAddress());
             } else {
                 for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
                     try {
-//                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessor().getAddress().getPort());
-//                        socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                         toSendMsg = new SSLClient(this.peer.getSuccessors().get(i).getAddress());
 
                         succ = this.peer.getSuccessors().get(i);

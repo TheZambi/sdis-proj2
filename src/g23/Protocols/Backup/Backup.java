@@ -1,21 +1,17 @@
 package g23.Protocols.Backup;
 
 import g23.FileInfo;
-import g23.Messages.*;
+import g23.Messages.Message;
+import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
 import g23.SSLEngine.SSLClient;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.print.DocFlavor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 
 
 public class Backup implements Runnable {
@@ -78,7 +74,6 @@ public class Backup implements Runnable {
                 try {
                     fileSize = Files.size(filePath);
                     if (!Files.exists(filePath) || Files.isDirectory(filePath) || fileSize > 64000000000L) {
-                        // peer.getOngoing().remove("backup-" + path + "-" + replicationDegree);
                         System.err.println("Backup " + path + ": File doesn't exist or has size larger than 64GB");
                         return;
                     }
@@ -111,8 +106,6 @@ public class Backup implements Runnable {
             for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
                 try {
                     PeerInfo successor = this.peer.getSuccessors().get(i);
-//                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
-//                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -131,7 +124,6 @@ public class Backup implements Runnable {
                         this.peer.getFingerTable().set(0, this.peer.getPeerInfo());
                     if (i == this.peer.getSuccessors().size() - 1)
                         System.out.println("Couldn't find an active successor, stopping BACKUP propagation");
-//                    e.printStackTrace();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

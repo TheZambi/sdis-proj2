@@ -3,16 +3,12 @@ package g23.Protocols.Restore;
 import g23.FileInfo;
 import g23.Messages.Message;
 import g23.Peer;
-import g23.SSLEngine.SSLClient;
 import g23.SSLEngine.SSLFinishedReadingException;
 import g23.SSLEngine.SSLServer;
 
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +33,6 @@ public class ReceiveRestoreFile {
             try {
 
                 //Receiving and storing the file
-//                ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
 
                 Files.deleteIfExists(Path.of("restore/" + fileToBeRestored.getPath()));
                 WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(Path.of("restore/" + fileToBeRestored.getPath())));
@@ -70,10 +65,5 @@ public class ReceiveRestoreFile {
             System.err.println("A file not requested for restore is being restored");
         }
 
-//        try {
-//            this.socket.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 }

@@ -39,11 +39,6 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
         return desiredReplicationDegree;
     }
 
-
-//    public int getChunkAmount() {
-//        return chunksPeers.size();
-//    }
-
     public PeerInfo getPeerInfo() {
         return peerInfo;
     }
@@ -60,12 +55,4 @@ public class FileInfo implements Serializable, Comparable<FileInfo> {
             return 0;
         }
     }
-
-//    public boolean allSent() {
-//        for(Chunk chunk : chunksPeers) {
-//            if(!chunk.isSent())
-//                return false;
-//        }
-//        return true;
-//    }
 }
