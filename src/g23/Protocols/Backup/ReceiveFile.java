@@ -71,15 +71,18 @@ public class ReceiveFile {
                     oos.writeObject(fileRequest);
                     oos.flush();
                     byte[] msg = bos.toByteArray();
-                    fromServer.write(msg);
+                    fromServer.write(msg, msg.length);
                     bos.close();
 
                     WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(Path.of("backup/" + key)));
 
-                    byte[] buffer = new byte[4096];
+                    byte[] buffer = new byte[50000];
 
-                    while (fromServer.read(buffer) > -1) {
-                        toNewFile.write(ByteBuffer.wrap(buffer));
+                    int bytesRead = 0;
+                    while ((bytesRead = fromServer.read(buffer)) > -1) {
+                        ByteBuffer b_buffer;
+                        b_buffer = ByteBuffer.wrap(buffer, 0, bytesRead);
+                        toNewFile.write(b_buffer);
                     }
                     fromServer.shutdown();
 

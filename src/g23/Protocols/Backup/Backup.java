@@ -120,7 +120,7 @@ public class Backup implements Runnable {
                     oos.flush();
                     byte[] msg = bos.toByteArray();
                     SSLClient toSendMsg = new SSLClient(successor.getAddress());
-                    toSendMsg.write(msg);
+                    toSendMsg.write(msg, msg.length);
                     bos.close();
 
                     //Managed to propagate to a successor.

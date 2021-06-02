@@ -46,11 +46,12 @@ public class SendFile {
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
             System.out.println("WRITING FILE CHUNK----------------------------------------------------------------------LOL-");
-            while (fromFile.read(buffer) > 0 || buffer.position() > 0) {
+            int bytesRead = 0;
+            while ((bytesRead = fromFile.read(buffer)) > 0 || buffer.position() > 0) {
                 System.out.println("WRITING FILE CHUNK-----------------------------------------------------------------------");
                 System.out.println(buffer);
                 buffer.flip();
-                toClient.write(buffer.array());
+                toClient.write(buffer.array(), bytesRead);
                 buffer.clear();
             }
 //            toPeer.close();
