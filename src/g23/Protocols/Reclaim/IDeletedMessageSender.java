@@ -51,6 +51,8 @@ public class IDeletedMessageSender implements Runnable {
             sslClient.write(msg, msg.length);
             bos.close();
 
+            System.out.println("SENT IDELETED (" + message.getFileId() + ") TO " + pi.getAddress().getAddress() + ":" + pi.getAddress().getPort());
+
             sslClient.shutdown();
 
         } catch (Exception e) {

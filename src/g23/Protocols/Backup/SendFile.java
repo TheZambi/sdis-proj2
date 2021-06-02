@@ -41,20 +41,18 @@ public class SendFile {
             return;
 
         try {
-//            WritableByteChannel toPeer = Channels.newChannel(socket.getOutputStream());
             ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(filePath));
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-            System.out.println("WRITING FILE CHUNK----------------------------------------------------------------------LOL-");
             int bytesRead = 0;
             while ((bytesRead = fromFile.read(buffer)) > 0 || buffer.position() > 0) {
-                System.out.println("WRITING FILE CHUNK-----------------------------------------------------------------------");
-                System.out.println(buffer);
                 buffer.flip();
                 toClient.write(buffer.array(), bytesRead);
                 buffer.clear();
             }
-//            toPeer.close();
+
+            System.out.println("SENT FILE " + message.getFileId() + " DATA TO " + message.getSenderId());
+
             fromFile.close();
 
         } catch (IOException e) {

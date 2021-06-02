@@ -88,6 +88,9 @@ public class Delete implements Runnable {
                     sslClient.write(msg, msg.length);
                     bos.close();
 
+                    System.out.println("SENT DELETE (" + deleteMsg.getFileId() + ") TO "
+                            + sslClient.getAddress().getAddress() + ":" + sslClient.getAddress().getPort());
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -100,7 +103,7 @@ public class Delete implements Runnable {
                     PeerInfo successor = peer.getSuccessors().get(i);
                     SSLClient sslClient = new SSLClient(successor.getAddress());
 
-                    System.out.println("Sending DELETE (propagation) to " + successor.getAddress().getPort());
+                    System.out.println("Sending DELETE (propagation) to " + successor.getId());
 
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(bos);

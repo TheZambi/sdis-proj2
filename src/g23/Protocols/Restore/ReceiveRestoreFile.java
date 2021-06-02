@@ -55,6 +55,7 @@ public class ReceiveRestoreFile {
                     b_buffer = ByteBuffer.wrap(buffer, 0, bytesRead);
                     toNewFile.write(b_buffer);
                 }
+                System.out.println("RECEIVED FILE DATA RESTORE (" + fileId + ")");
 
                 toNewFile.close();
 

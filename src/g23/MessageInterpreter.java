@@ -22,16 +22,14 @@ public class MessageInterpreter implements Runnable {
     public MessageInterpreter(Peer peer, SSLServer sslServer) {
         this.peer = peer;
         this.sslServer = sslServer;
-//        this.sslServer.doHandshake();
     }
 
     @Override
     public void run() {
         byte[] readMessage = new byte[40000];
-        int readBytes;
 
         try {
-            readBytes = sslServer.read(readMessage);
+            sslServer.read(readMessage);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -41,32 +39,37 @@ public class MessageInterpreter implements Runnable {
 
         try (ObjectInputStream ois = new ObjectInputStream(bis)) {
             Message msg = (Message) ois.readObject();
-            System.out.println(msg.getType());
 
-//            Message msg = (Message) ois.readObject();
-//
             switch (msg.getType()) {
                 case PUTFILE:
+                    System.out.println("RECEIVED PUTFILE (" + msg.getFileId() + ", size: " + msg.getFileSize() +
+                            ", desired=" + msg.getReplicationDegree() + ", current=" + msg.getCurrentReplicationDegree() + ") FROM " + msg.getSenderId());
                     (new ReceiveFile(this.peer, msg)).handleMessage();
                     break;
                 case IWANT:
+                    System.out.println("RECEIVED IWANT (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     (new SendFile(this.peer, msg, sslServer)).handleMessage();
                     break;
                 //we will receive a file we requested to restore
                 case RESTOREFILE:
+                    System.out.println("RECEIVED RESTOREFILE (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     (new ReceiveRestoreFile(this.peer, msg, sslServer)).handleMessage();
                     break;
                 //Request to restore a file
                 case GETFILE:
+                    System.out.println("RECEIVED GETFILE (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     (new SendRestoreFile(this.peer, msg)).handleMessage();
                     break;
                 case REMOVED:
+                    System.out.println("RECEIVED REMOVED (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     (new ReceiveRemoved(this.peer, msg)).handleMessage();
                     break;
                 case DELETE:
+                    System.out.println("RECEIVED DELETE (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     new DeleteFile(this.peer, msg).handleMessage();
                     break;
                 case IDELETED:
+                    System.out.println("RECEIVED IDELETED (" + msg.getFileId() + ") FROM " + msg.getSenderId());
                     this.peer.getFilesStoredInPeers().get(msg.getFileId()).remove(msg.getSenderId());
                     break;
 

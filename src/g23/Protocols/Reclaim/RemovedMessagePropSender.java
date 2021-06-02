@@ -39,6 +39,9 @@ public class RemovedMessagePropSender implements Runnable {
                 fromServer.write(msg, msg.length);
                 bos.close();
 
+                System.out.println("FORWARDED REMOVE (" + message.getFileId() + ") TO " +
+                        this.peer.getSuccessors().get(i).getAddress().getAddress() + ":" + this.peer.getSuccessors().get(i).getAddress().getPort());
+
                 fromServer.shutdown();
 
                 break;

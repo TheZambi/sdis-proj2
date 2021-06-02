@@ -23,7 +23,7 @@ public class Peer implements ChordNode {
 
     //Chord can hold 2^m nodes
     //Chord related fields
-    private static final int m = 128;
+    private static final int m = 64;
 //    private static final int m = 5;
 
     //Time intervals for stabilization methods
@@ -122,6 +122,8 @@ public class Peer implements ChordNode {
         this.predecessorChecker.scheduleAtFixedRate(this::check_predecessor, Peer.PREDECESSOR_CHECKER_INTERVAL, Peer.PREDECESSOR_CHECKER_INTERVAL, TimeUnit.MILLISECONDS);
         this.stateSaver.scheduleAtFixedRate(new Synchronizer(this), 1, 1, TimeUnit.SECONDS);
         this.checkIfPeersAreAlive.scheduleAtFixedRate(this::peersAreAlive, 5, 5, TimeUnit.SECONDS);
+
+        this.printInfo();
     }
 
 
@@ -186,7 +188,7 @@ public class Peer implements ChordNode {
 
     @Override
     public PeerState state() throws RemoteException {
-        System.out.println(this.getSuccessor().toString());
+//        System.out.println(this.getSuccessor().toString());
         return new PeerState(maxSpace, currentSpace, files, storedFiles, null); //TODO CHANGE ONGOING
     }
 
@@ -229,7 +231,7 @@ public class Peer implements ChordNode {
 //        long idInt = address.getPort() - 8000;
         idInt = Math.round(idInt % Math.pow(2, Peer.m));
 
-        System.out.println("My id is: " + idInt);
+//        System.out.println("My id is: " + idInt);
         return idInt;
     }
 

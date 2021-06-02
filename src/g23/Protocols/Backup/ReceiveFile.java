@@ -52,19 +52,15 @@ public class ReceiveFile {
                 // will store if there is enough space in the peer
                 if (peer.getRemainingSpace() >= message.getFileSize()) {
 
-                    System.out.println("RECEIVING File " + key);
+                    System.out.println("ACCEPTED PUTFILE FROM " + message.getSenderId());
 
-//                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
-//                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                     SSLClient fromServer = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
-//                    fromServer.doHandshake();
 
                     String[] msgArgs = {
                             String.valueOf(this.peer.getId()),
                             String.valueOf(message.getFileId())
                     };
                     Message fileRequest = new Message(MessageType.IWANT, msgArgs, null);
-
 
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -73,6 +69,8 @@ public class ReceiveFile {
                     byte[] msg = bos.toByteArray();
                     fromServer.write(msg, msg.length);
                     bos.close();
+
+                    System.out.println("SENT IWANT (" + key + ") TO " + message.getAddress() + ":" + message.getPort());
 
                     WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(Path.of("backup/" + key)));
 
@@ -95,7 +93,7 @@ public class ReceiveFile {
 
                     peer.addSpace(message.getFileSize());
 
-                    System.out.println("STORED FILE " + key);
+                    System.out.println("RECEIVED AND STORED FILE " + key);
 
                     // Add to out storedfiles map
                     FileInfo fi = new FileInfo(null, this.message.getFileId(), this.message.getReplicationDegree(), new PeerInfo(new InetSocketAddress(this.message.getAddress(), this.message.getPort()), this.message.getSenderId()));
@@ -108,6 +106,7 @@ public class ReceiveFile {
                 e.printStackTrace();
             }
         } else {
+            System.out.println("ALREADY STORED HERE (ID=" + message.getFileId() +")");
             this.message.decrementCurrentReplication();
         }
         //If needed send the file to successor (decrements replication degree)

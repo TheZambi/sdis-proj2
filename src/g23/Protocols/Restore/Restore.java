@@ -81,6 +81,8 @@ public class Restore implements Runnable {
             bos.close();
             sslClient.shutdown();
 
+            System.out.println("SENT GETFILE (" + msgToSend.getFileId() + ") TO " + sslClient.getAddress().getAddress() + ":" + sslClient.getAddress().getPort());
+
             //Add file to set of files to restore so that when we receive a conection it can be validated
             //TODO maybe make a timeout if the file doesnt come
             this.peer.getFilesToRestore().add(fileId);

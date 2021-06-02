@@ -64,19 +64,16 @@ public class BackupMessageSender implements Runnable {
                 return;
             }
 
-            System.out.println("Sending " + this.message.getType().toString() + " of file " + fileId + " to " + toSendMsg.getAddress().getPort());
-
-//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-//            oos.writeObject(message);
-
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(this.message);
             oos.flush();
             byte[] msg = bos.toByteArray();
-//            toSendMsg.doHandshake();
             toSendMsg.write(msg, msg.length);
             bos.close();
+
+            System.out.println("SENT " + this.message.getType().toString() + "(" + fileId + ", replication="+ message.getReplicationDegree()
+                    + ") TO " + toSendMsg.getAddress().getAddress() + ":" + toSendMsg.getAddress().getPort());
 
             toSendMsg.shutdown();
 

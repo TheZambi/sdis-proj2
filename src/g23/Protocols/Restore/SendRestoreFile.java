@@ -74,8 +74,6 @@ public class SendRestoreFile {
 
                 Message msg = new Message(MessageType.RESTOREFILE, msgArgs, null);
 
-                //Creating the socket to the file requester
-
                 SSLClient sslClient = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
 
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -86,18 +84,19 @@ public class SendRestoreFile {
                 sslClient.write(msgToSend, msgToSend.length);
                 bos.close();
 
+                System.out.println("SENT RESTOREFILE (" + msg.getFileId() + ") TO " + message.getAddress() + ":" + message.getPort());
+
                 ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(Path.of("backup/" + fileInfo.getHash())));
                 ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-                System.out.println("SENDING FILE CHUNK (RESTORE)----------------------------------------------------------------------LOL-");
                 int bytesRead = 0;
                 while ((bytesRead = fromFile.read(buffer)) > 0 || buffer.position() > 0) {
-                    System.out.println("SENDING FILE CHUNK (RESTORE)-----------------------------------------------------------------------");
-                    System.out.println(buffer);
                     buffer.flip();
                     sslClient.write(buffer.array(), bytesRead);
                     buffer.clear();
                 }
+
+                System.out.println("SENT FILE DATA RESTORE (" + msg.getFileId() + ") TO " + message.getAddress() + ":" + message.getPort());
 
                 fromFile.close();
 

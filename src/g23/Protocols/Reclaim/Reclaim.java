@@ -46,10 +46,9 @@ public class Reclaim implements Runnable {
         Message msgToSend = new Message(MessageType.REMOVED, msgArgs, null);
 
         try {
-            System.out.println("DELETING FILE");
             Files.delete(Path.of("backup/" + stringFileInfoEntry.getKey()));
 
-            System.out.println("DELETED FILE " + stringFileInfoEntry.getKey());
+            System.out.println("DELETED FILE " + stringFileInfoEntry.getKey() + " BECAUSE OF RECLAIM");
 
             (new IDeletedMessageSender(this.peer, msgToSend.getFileId())).run();
 
