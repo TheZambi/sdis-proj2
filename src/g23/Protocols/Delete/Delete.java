@@ -5,9 +5,11 @@ import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Map;
@@ -49,18 +51,18 @@ public class Delete implements Runnable {
                     long fileId = Peer.getFileId(this.path, this.peer.getId());
                     PeerInfo succID = this.peer.findSuccessor(fileId);
 
-                    SSLSocket socket = null;
+                    SSLClient sslClient = null;
 
                     if (succID.getId() != this.peer.getId()) {
-                        socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(succID.getAddress().getAddress(), succID.getAddress().getPort());
+                        sslClient = new SSLClient(succID.getAddress());
                     } else {
 
                         for(int i=0; i<this.peer.getSuccessors().size();i++) {
                             try {
-                                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessors().get(i).getAddress().getPort());
+                                sslClient = new SSLClient(this.peer.getSuccessors().get(i).getAddress());
 
                                 break;
-                            } catch(IOException e)
+                            } catch(Exception e)
                             {
                                 if(i == 0)
                                     this.peer.getFingerTable().set(0,this.peer.getPeerInfo());
@@ -72,19 +74,21 @@ public class Delete implements Runnable {
                             }
                         }
                     }
-                    if(socket == null)
+                    if(sslClient == null)
                         return;
-
-                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
                     this.peer.getFiles().remove(match.getKey());
                     deleted.set(true);
 
-                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
                     oos.writeObject(deleteMsg);
+                    oos.flush();
+                    byte[] msg = bos.toByteArray();
+                    sslClient.write(msg, msg.length);
+                    bos.close();
 
-
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -93,12 +97,18 @@ public class Delete implements Runnable {
             for(int i=0; i<this.peer.getSuccessors().size();i++) {
                 try {
                     PeerInfo successor = peer.getSuccessors().get(i);
-                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(successor.getAddress().getAddress(), successor.getAddress().getPort());
-                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                    SSLClient sslClient = new SSLClient(successor.getAddress());
 
-                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                    System.out.println("Sending DELETE (propagation) to " + socket.getPort());
+                    System.out.println("Sending DELETE (propagation) to " + successor.getAddress().getPort());
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
                     oos.writeObject(this.message);
+                    oos.flush();
+                    byte[] msg = bos.toByteArray();
+                    sslClient.write(msg, msg.length);
+                    bos.close();
+
                     break;
                 } catch (Exception e) {
                     if(i == 0)

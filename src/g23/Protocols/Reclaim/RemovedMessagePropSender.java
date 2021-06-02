@@ -1,12 +1,17 @@
-package g23;
+package g23.Protocols.Reclaim;
 
 import g23.Messages.Message;
+import g23.Messages.MessageType;
+import g23.Peer;
+import g23.SSLEngine.SSLClient;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 public class RemovedMessagePropSender implements Runnable {
 
@@ -24,14 +29,18 @@ public class RemovedMessagePropSender implements Runnable {
 
         for (int i = 0; i < this.peer.getSuccessors().size(); i++) {
             try {
-                socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.peer.getSuccessors().get(i).getAddress().getAddress(), this.peer.getSuccessors().get(i).getAddress().getPort());
-                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                SSLClient fromServer = new SSLClient(this.peer.getSuccessors().get(i).getAddress());
 
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(bos);
                 oos.writeObject(message);
+                oos.flush();
+                byte[] msg = bos.toByteArray();
+                fromServer.write(msg, msg.length);
+                bos.close();
 
                 break;
-            } catch(IOException e){
+            } catch(Exception e){
                 if(i == 0)
                     this.peer.getFingerTable().set(0,this.peer.getPeerInfo());
                 if(i == this.peer.getSuccessors().size() - 1)

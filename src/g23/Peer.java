@@ -111,6 +111,7 @@ public class Peer implements ChordNode {
         this.storedFiles = new ConcurrentHashMap<>();
         this.filesStoredinPeers = new ConcurrentHashMap<>();
         this.filesToRestore = new HashSet<>();
+
         this.bindRMI(this.info.getId());
         this.readState();
 

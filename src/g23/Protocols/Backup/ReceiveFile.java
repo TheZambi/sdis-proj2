@@ -6,14 +6,13 @@ import g23.Messages.MessageType;
 import g23.Peer;
 import g23.PeerInfo;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import g23.SSLEngine.SSLClient;
+import g23.SSLEngine.SSLFinishedReadingException;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,35 +54,44 @@ public class ReceiveFile {
 
                     System.out.println("RECEIVING File " + key);
 
-                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
-                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
-
-                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+//                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
+//                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                    SSLClient fromServer = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
+//                    fromServer.doHandshake();
 
                     String[] msgArgs = {
                             String.valueOf(this.peer.getId()),
                             String.valueOf(message.getFileId())
                     };
                     Message fileRequest = new Message(MessageType.IWANT, msgArgs, null);
+
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
                     oos.writeObject(fileRequest);
+                    oos.flush();
+                    byte[] msg = bos.toByteArray();
+                    fromServer.write(msg, msg.length);
+                    bos.close();
 
-                    ReadableByteChannel fromInitiator = Channels.newChannel(socket.getInputStream());
+                    WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(Path.of("backup/" + key)));
 
-                    Files.deleteIfExists(Path.of("backup/" + key));
-                    Path newFile = Files.createFile(Path.of("backup/" + key));
+                    byte[] buffer = new byte[50000];
 
-                    WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));
-
-                    ByteBuffer buffer = ByteBuffer.allocate(4096);
-
-                    while (fromInitiator.read(buffer) > 0 || buffer.position() > 0) {
-                        buffer.flip();
-                        toNewFile.write(buffer);
-                        buffer.compact();
+                    int bytesRead = 0;
+                    while (true) {
+                        try {
+                            bytesRead = fromServer.read(buffer);
+                        } catch (SSLFinishedReadingException e) {
+                            break;
+                        }
+                        ByteBuffer b_buffer;
+                        b_buffer = ByteBuffer.wrap(buffer, 0, bytesRead);
+                        toNewFile.write(b_buffer);
                     }
+                    fromServer.shutdown();
 
                     toNewFile.close();
-                    fromInitiator.close();
 
                     peer.addSpace(message.getFileSize());
 
@@ -103,7 +111,7 @@ public class ReceiveFile {
             this.message.decrementCurrentReplication();
         }
         //If needed send the file to successor (decrements replication degree)
-        System.out.println("Current Replication Degree: " + message.getReplicationDegree());
+        System.out.println("Current Replication Degree: " + message.getCurrentReplicationDegree());
         if (this.message.getCurrentReplicationDegree() > 0) {
             (new Backup(this.peer, this.message)).run();
         }

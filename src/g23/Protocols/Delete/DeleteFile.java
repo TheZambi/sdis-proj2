@@ -51,7 +51,6 @@ public class DeleteFile {
 
 
                 System.out.println("Deleted FILE " + key);
-                System.out.println("CURRENT REPLICATION: " + this.message.getCurrentReplicationDegree());
                 //Storing the received file
                 try {
                     Boolean deleted = Files.deleteIfExists(Path.of("backup/" + key));
@@ -62,6 +61,7 @@ public class DeleteFile {
                 // Add to out storedfiles map
                 this.peer.getStoredFiles().remove(key);
                 this.message.decrementCurrentReplication();
+                System.out.println("CURRENT REPLICATION: " + this.message.getCurrentReplicationDegree());
 
             } catch (Exception e) {
                 e.printStackTrace();

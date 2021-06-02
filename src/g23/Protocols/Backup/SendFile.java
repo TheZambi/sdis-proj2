@@ -2,6 +2,7 @@ package g23.Protocols.Backup;
 
 import g23.Messages.Message;
 import g23.Peer;
+import g23.SSLEngine.SSLServer;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
@@ -16,12 +17,12 @@ import java.nio.file.Path;
 public class SendFile {
     private final Peer peer;
     private final Message message;
-    private final SSLSocket socket;
+    private final SSLServer toClient;
 
-    public SendFile(Peer peer, Message message, SSLSocket socket) {
+    public SendFile(Peer peer, Message message, SSLServer toClient) {
         this.peer = peer;
         this.message = message;
-        this.socket = socket;
+        this.toClient = toClient;
     }
 
     public void handleMessage() {
@@ -40,17 +41,20 @@ public class SendFile {
             return;
 
         try {
-            WritableByteChannel toPeer = Channels.newChannel(socket.getOutputStream());
+//            WritableByteChannel toPeer = Channels.newChannel(socket.getOutputStream());
             ReadableByteChannel fromFile = Channels.newChannel(Files.newInputStream(filePath));
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-            while (fromFile.read(buffer) > 0 || buffer.position() > 0) {
+            System.out.println("WRITING FILE CHUNK----------------------------------------------------------------------LOL-");
+            int bytesRead = 0;
+            while ((bytesRead = fromFile.read(buffer)) > 0 || buffer.position() > 0) {
+                System.out.println("WRITING FILE CHUNK-----------------------------------------------------------------------");
+                System.out.println(buffer);
                 buffer.flip();
-                toPeer.write(buffer);
-                buffer.compact();
+                toClient.write(buffer.array(), bytesRead);
+                buffer.clear();
             }
-
-            toPeer.close();
+//            toPeer.close();
             fromFile.close();
 
         } catch (IOException e) {
