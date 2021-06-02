@@ -196,10 +196,10 @@ public class Peer implements ChordNode {
         System.out.println("---------INFO--------");
         System.out.println("ID: " + this.getId());
         System.out.println("IP address: " + this.getAddress().getAddress() + ":" + this.getAddress().getPort());
-        System.out.println("Predecessor: " + this.predecessor);
-        for (int i = 0; i < Peer.m; i++) {
-            System.out.println("Finger " + i + ":" + fingerTable.get(i));
-        }
+//        System.out.println("Predecessor: " + this.predecessor);
+//        for (int i = 0; i < Peer.m; i++) {
+//            System.out.println("Finger " + i + ":" + fingerTable.get(i));
+//        }
         System.out.println("----------------------");
     }
 
