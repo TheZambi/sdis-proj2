@@ -22,7 +22,7 @@ public class MessageInterpreter implements Runnable {
     public MessageInterpreter(Peer peer, SSLServer sslServer) {
         this.peer = peer;
         this.sslServer = sslServer;
-        this.sslServer.doHandshake();
+//        this.sslServer.doHandshake();
     }
 
     @Override

@@ -41,7 +41,7 @@ public abstract class SSLEngineOrchestrator {
             if(isClient)
                 socketChannel.connect(address);
 
-            this.socketChannel.configureBlocking(false);
+            this.socketChannel.configureBlocking(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -56,10 +56,12 @@ public abstract class SSLEngineOrchestrator {
         appOutBuf = ByteBuffer.allocate(appBufSize);
 
         taskExecutor = Executors.newSingleThreadExecutor();
+        doHandshake();
     }
 
     public void doHandshake() {
         try {
+            System.out.println("BEGGINING HANDSHAKE");
             sslEngine.beginHandshake();
             SSLEngineResult.HandshakeStatus status = sslEngine.getHandshakeStatus();
 
@@ -81,8 +83,10 @@ public abstract class SSLEngineOrchestrator {
                         status = sslEngine.getHandshakeStatus();
                         break;
                     case FINISHED:
+                        status = SSLEngineResult.HandshakeStatus.FINISHED;
                         break;
                     case NOT_HANDSHAKING:
+                        status = SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
                         break;
                 }
             }
@@ -111,19 +115,19 @@ public abstract class SSLEngineOrchestrator {
                 } else{
                     appInBuf.clear();
                 }
-                this.need_unwrap();
-//                break;
+                return this.need_unwrap();
+
             case BUFFER_UNDERFLOW:
 //                System.out.println("------------------------------------BUFFER UNDERFLOW------------------------------");
 //                System.out.println(sslEngine.getSession().getPacketBufferSize());
 //                System.out.println(netInBuf);
 //                System.out.println(appInBuf);
 
-                if(sslEngine.getSession().getPacketBufferSize() > netInBuf.capacity()){
-                    netInBuf = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
-                } else{
-                    netInBuf.clear();
-                }
+//                if(sslEngine.getSession().getPacketBufferSize() > netInBuf.capacity()){
+//                    netInBuf = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
+//                } else{
+//                    netInBuf.clear();
+//                }
 
                 try {
                     int size = socketChannel.read(netInBuf);
@@ -230,6 +234,14 @@ public abstract class SSLEngineOrchestrator {
             case BUFFER_UNDERFLOW:
                 throw new SSLException("Buffer underflow after wrap");
             case CLOSED:
+                netOutBuf.flip();
+                try {
+                    int bytesWritten = socketChannel.write(netOutBuf);
+                    System.out.println("WRITE IN CHANNEL " + bytesWritten + " BYTES " + result.getStatus());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return status;
             case OK:
                 netOutBuf.flip();
                 try {

@@ -58,32 +58,27 @@ public class ReceiveFile {
 //                    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(message.getAddress(), message.getPort());
 //                    socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                     SSLClient fromServer = new SSLClient(new InetSocketAddress(message.getAddress(), message.getPort()));
-                    fromServer.doHandshake();
-
-
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(bos);
-                    oos.writeObject(this.message);
-                    oos.flush();
-                    byte[] msg = bos.toByteArray();
-                    fromServer.write(msg);
-                    bos.close();
+//                    fromServer.doHandshake();
 
                     String[] msgArgs = {
                             String.valueOf(this.peer.getId()),
                             String.valueOf(message.getFileId())
                     };
                     Message fileRequest = new Message(MessageType.IWANT, msgArgs, null);
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
                     oos.writeObject(fileRequest);
+                    oos.flush();
+                    byte[] msg = bos.toByteArray();
+                    fromServer.write(msg);
+                    bos.close();
 
-
-                    Path newFile = Files.createFile(Path.of("backup/" + key));
-
-                    WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(newFile));
+                    WritableByteChannel toNewFile = Channels.newChannel(Files.newOutputStream(Path.of("backup/" + key)));
 
                     byte[] buffer = new byte[4096];
 
-                    while (fromServer.read(buffer) > 0) {
+                    while (fromServer.read(buffer) > -1) {
                         toNewFile.write(ByteBuffer.wrap(buffer));
                     }
                     fromServer.shutdown();

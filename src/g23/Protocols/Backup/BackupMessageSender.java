@@ -70,7 +70,7 @@ public class BackupMessageSender implements Runnable {
             oos.writeObject(this.message);
             oos.flush();
             byte[] msg = bos.toByteArray();
-            toSendMsg.doHandshake();
+//            toSendMsg.doHandshake();
             toSendMsg.write(msg);
             bos.close();
 

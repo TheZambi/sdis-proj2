@@ -105,7 +105,7 @@ public class Peer implements ChordNode {
         this.storedFiles = new ConcurrentHashMap<>();
         this.filesToRestore = new HashSet<>();
         this.bindRMI(this.info.getId(), rmiHost);
-        this.readState();
+//        this.readState();
 
         this.listenerThread.execute(new ConnectionDispatcher(this));
         this.stabilizer.scheduleAtFixedRate(this::stabilize, Peer.STABILIZER_INTERVAL + 400, Peer.STABILIZER_INTERVAL, TimeUnit.MILLISECONDS);

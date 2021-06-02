@@ -51,7 +51,7 @@ public class SendFile {
                 System.out.println(buffer);
                 buffer.flip();
                 toClient.write(buffer.array());
-                buffer.compact();
+                buffer.clear();
             }
 //            toPeer.close();
             fromFile.close();
