@@ -110,6 +110,8 @@ public class Delete implements Runnable {
                     sslClient.write(msg, msg.length);
                     bos.close();
 
+                    sslClient.shutdown();
+
                     break;
                 } catch (Exception e) {
                     if(i == 0)
