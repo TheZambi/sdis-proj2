@@ -186,7 +186,7 @@ public class Peer implements ChordNode {
 
     @Override
     public PeerState state() throws RemoteException {
-        System.out.println("Saving state");
+        System.out.println(this.getSuccessor().toString());
         return new PeerState(maxSpace, currentSpace, files, storedFiles, null); //TODO CHANGE ONGOING
     }
 
@@ -417,7 +417,7 @@ public class Peer implements ChordNode {
         }
 //        System.err.println("Starting Fix Finger" + (next - 1));
         try {
-            fingerTable.set(next - 1, findSuccessor((this.getId() + (int) Math.pow(2, next - 1)) % (int) Math.pow(2, m)));
+            fingerTable.set(next - 1, findSuccessor((this.getId() + (long) Math.pow(2, next - 1)) % (long) Math.pow(2, m)));
         } catch (RemoteException e) {
             this.fingerTable.set(next - 1, null);
 //            e.printStackTrace();

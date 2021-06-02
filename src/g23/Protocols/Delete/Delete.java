@@ -94,6 +94,7 @@ public class Delete implements Runnable {
 
             });
         } else {
+            System.out.println("REACHED FOR");
             for(int i=0; i<this.peer.getSuccessors().size();i++) {
                 try {
                     PeerInfo successor = peer.getSuccessors().get(i);
