@@ -271,10 +271,15 @@ public class Peer implements ChordNode {
     }
 
     public boolean chordIdInBetween(long id, PeerInfo peer1, PeerInfo peer2) {
-        if (peer1.getId() < peer2.getId()) {
-            return peer1.getId() < id && id <= peer2.getId();
-        } else {
-            return (peer1.getId() < id && id < Math.pow(2, m)) || (0 <= id && id <= peer2.getId());
+        try {
+            if (peer1.getId() < peer2.getId()) {
+                return peer1.getId() < id && id <= peer2.getId();
+            } else {
+                return (peer1.getId() < id && id < Math.pow(2, m)) || (0 <= id && id <= peer2.getId());
+            }
+        }catch (Exception e)
+        {
+            return false;
         }
     }
 
