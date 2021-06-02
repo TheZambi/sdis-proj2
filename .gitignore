@@ -1,1 +1,4 @@
 src/build/
+src/build/g23/*.class
+src/build/g23/*/*.class
+src/build/g23/*/*/*.class
