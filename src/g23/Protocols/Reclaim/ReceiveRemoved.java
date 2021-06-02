@@ -1,6 +1,5 @@
 package g23.Protocols.Reclaim;
 
-import g23.RemovedMessagePropSender;
 import g23.Messages.Message;
 import g23.Peer;
 import g23.Protocols.Backup.Backup;

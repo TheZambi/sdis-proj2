@@ -5,6 +5,7 @@ import g23.Messages.Message;
 import g23.Messages.MessageType;
 import g23.Peer;
 import g23.SSLEngine.SSLClient;
+import g23.SSLEngine.SSLFinishedReadingException;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -79,7 +80,12 @@ public class ReceiveFile {
                     byte[] buffer = new byte[50000];
 
                     int bytesRead = 0;
-                    while ((bytesRead = fromServer.read(buffer)) > -1) {
+                    while (true) {
+                        try {
+                            bytesRead = fromServer.read(buffer);
+                        } catch (SSLFinishedReadingException e) {
+                            break;
+                        }
                         ByteBuffer b_buffer;
                         b_buffer = ByteBuffer.wrap(buffer, 0, bytesRead);
                         toNewFile.write(b_buffer);
@@ -106,7 +112,7 @@ public class ReceiveFile {
             this.message.decrementCurrentReplication();
         }
         //If needed send the file to successor (decrements replication degree)
-        System.out.println("Current Replication Degree: " + message.getReplicationDegree());
+        System.out.println("Current Replication Degree: " + message.getCurrentReplicationDegree());
         if (this.message.getCurrentReplicationDegree() > 0) {
             (new Backup(this.peer, this.message)).run();
         }

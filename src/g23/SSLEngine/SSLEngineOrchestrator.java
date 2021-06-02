@@ -208,7 +208,7 @@ public abstract class SSLEngineOrchestrator {
         return status;
     }
 
-    public int read(byte[] buffer) throws IOException {
+    public int read(byte[] buffer) throws IOException, SSLFinishedReadingException {
 //        int num = socketChannel.read(netInBuf);
 //        if(num == 0){
 //            this.read(buffer);
@@ -216,14 +216,7 @@ public abstract class SSLEngineOrchestrator {
 
         System.out.println(sslEngine.isOutboundDone());
 
-        try {
-            this.need_unwrap();
-        } catch (SSLFinishedReadingException e) {
-//            e.printStackTrace();
-            return -1;
-        }
-//        }
-
+        this.need_unwrap();
 
         this.appInBuf.flip();
 

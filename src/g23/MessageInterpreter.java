@@ -32,7 +32,7 @@ public class MessageInterpreter implements Runnable {
 
         try {
             readBytes = sslServer.read(readMessage);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -60,12 +60,12 @@ public class MessageInterpreter implements Runnable {
 //                case GETFILE:
 //                    (new SendRestoreFile(this.peer, msg)).handleMessage();
 //                    break;
-//                case REMOVED:
-//                    (new ReceiveRemoved(this.peer, msg)).handleMessage();
-//                    break;
-//                case DELETE:
-//                    new DeleteFile(this.peer, msg).handleMessage();
-//                    break;
+                case REMOVED:
+                    (new ReceiveRemoved(this.peer, msg)).handleMessage();
+                    break;
+                case DELETE:
+                    new DeleteFile(this.peer, msg).handleMessage();
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
